@@ -1,0 +1,102 @@
+body {
+    font-family: Arial, Helvetica, sans-serif;
+    
+}
+
+.wrapper {
+    margin: 2em;
+    
+}
+
+form {
+    margin-left: 2em;
+    display: flex;
+    flex-direction: column;
+}
+
+.clauseBox {
+    display: flex;
+    margin: 0.5em 0em 0.5em 0em;
+}
+
+/*.clauseCheck {
+    width: 2em;
+    height: 2em;
+    vertical-align: middle;
+}*/
+
+.nextBtn {
+    background-color: rgb(255, 255, 255);
+    box-shadow: 3px 3px 2px black;
+}
+
+
+/*For styling the keyboard*/
+
+#keyboard {
+    font-size: 3ch;
+    text-align: center;
+    width: 100%;
+    border: 1px solid black;
+}
+
+.topRow {
+    display: flex;
+    flex-direction:row;
+    align-items: center;
+    justify-content: center;
+}
+
+.topKeys {
+    flex: auto;
+    border: 1px solid black;
+    height: 1.25em;
+    width: 1em;
+    margin: 0.25em;
+}
+
+.secondRow {
+    display: flex;
+    flex-direction:row;
+    align-items: center;
+    justify-content: center;
+    
+}
+
+.secKeys {
+    flex: auto;
+    border: 1px solid black;
+    height: 1.25em;
+    width: 1em;
+    margin: 0.25em;
+}
+
+.thirdRow {
+    display: flex;
+    flex-direction:row;
+    align-items: center;
+    justify-content: center;
+}
+
+.thiKeys {
+    flex: auto;
+    border: 1px solid black;
+    height: 1.25em;
+    width: 1em;
+    margin: 0.25em;
+}
+
+.bottomRow {
+    display: flex;
+    flex-direction:row;
+    align-items: center;
+    justify-content: center;
+}
+
+.spaceKey {
+    flex: auto;
+    border: 1px solid black;
+    height: 1.25em;
+    width: 1em;
+    margin: 0.25em;
+}
