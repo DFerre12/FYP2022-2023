@@ -14,9 +14,9 @@ if (checkPIS != null) {
 /*When user presses the 'next' button, load next page*/
 /*Check that PISnext isn't null, otherwise other pages will fail to work*/
 if (PISnext != null) {
-    PISnext.addEventListener('click', (e) => {
+    PISnext.href = 'conform.html';/*addEventListener('click', (e) => {
         alert('worked');
-    });
+    });*/
 }
     
 
@@ -57,9 +57,17 @@ function updateCheckCount() {
 
 /*Experiment page code*/
 
-
-
 const kbSeshCount = document.querySelector('#kbSeshCount');
+const phraseCounter = document.querySelector('#phraseCounter');
+let phraseCount = '0';
+const phrases = document.getElementById('phrases');
+const keyboardArea = document.getElementById('keyboard');
+if (keyboardArea != null) {
+    kbArea = keyboardArea.getBoundingClientRect();
+}
+const keyboardInput = document.getElementById('keyboardInput');
+let touchX;
+let touchY;
 
 /*Check that kbSeshCount isn't null, otherwise other pages will fail to work*/
 if (kbSeshCount != null) {
@@ -69,18 +77,24 @@ if (kbSeshCount != null) {
     document.querySelector('title').textContent = `Experiment ${seshCount} - 899549 Research Tool`;
 }
 
-const phraseCounter = document.querySelector('#phraseCounter');
+
 
 /*Check that phraseCounter isn't null, otherwise other pages will fail to work*/
 if (phraseCounter != null) {
-    let phraseCount = '1';
     phraseCounter.textContent = `Phrases typed ${phraseCount}/5`;
 }
 
-/*Generate keyboard*/
+/*Generate keyboard and start practice session*/
+
 if (window.location.pathname.includes('experiment.html')) {
     generateKb();
+    practiceSession();
 }
+
+function practiceSession() {
+    
+}
+
 /*Select 1 or 2 to give the user either the control or the test keyboard 1 = Control, 2 = Test*/
 function generateKb() {
     kbNum = Math.round(Math.random() + 1);
@@ -101,17 +115,36 @@ function TestKb() {
     console.log('Using test keyboard');
 }
 
-keyboardArea = document.getElementById('keyboard');
-let touchX;
-let touchY;
+if (keyboardArea != null) {
+        keyboardArea.addEventListener("touchstart", (e) => {
+        touchX = e.touches[0].clientX;
+        touchY = e.touches[0].clientY - kbArea.top;
+    });
+    
+    keyboardArea.addEventListener("touchend", (e) => {
+        console.log(touchX);
+        console.log(touchY);
+        keyPressed();
+        if (keyboardInput.value === phrases.innerHTML) {
+            phraseTyped();
+        };
+    });
+}
 
-keyboardArea.addEventListener("touchstart", (e) => {
-    let kbArea = keyboardArea.getBoundingClientRect();
-    touchX = e.touches[0].clientX - kbArea.left;
-    touchY = e.touches[0].clientY - kbArea.top;
-});
 
-keyboardArea.addEventListener("touchend", (e) => {
-    console.log(touchX);
-    console.log(touchY);
-});
+function keyPressed() {
+    console.log('Key\'s been pressed')
+    keyboardInput.value += 'f';
+}
+
+function phraseTyped() {
+    phraseCount ++;
+    phraseCounter.textContent = `Phrases typed ${phraseCount}/5`;
+    keyboardInput.value = '';
+    newPhrase();
+}
+
+/*Generate a new phrase when the user has finished typing the current one, refer to design doc*/
+function newPhrase() {
+    phrases.textContent = 'New phrase';
+}
