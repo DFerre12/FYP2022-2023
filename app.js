@@ -86,16 +86,14 @@ function generateKb() {
     kbNum = Math.round(Math.random() + 1);
 
     if (kbNum == 1) {
-        ContolKb();
+        ControlKb();
     } else if (kbNum == 2) {
         TestKb();
     }
 }
     
 
-const kbArea = document.querySelector('#keyboard');
-
-function ContolKb() {
+function ControlKb() {
     console.log('Using control keyboard');
 }
 
@@ -103,3 +101,17 @@ function TestKb() {
     console.log('Using test keyboard');
 }
 
+keyboardArea = document.getElementById('keyboard');
+let touchX;
+let touchY;
+
+keyboardArea.addEventListener("touchstart", (e) => {
+    let kbArea = keyboardArea.getBoundingClientRect();
+    touchX = e.touches[0].clientX - kbArea.left;
+    touchY = e.touches[0].clientY - kbArea.top;
+});
+
+keyboardArea.addEventListener("touchend", (e) => {
+    console.log(touchX);
+    console.log(touchY);
+});
