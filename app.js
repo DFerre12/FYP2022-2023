@@ -117,12 +117,10 @@ function generateKeyCoords() {
         
         let currentRow = rowList[rows];
         let currentRowBounds = rowBoundList[rows];
-        console.log(currentRowBounds.width);
         let keyHeight = currentRowBounds.height;
         let keyWidth = currentRowBounds.width / currentRow.length;
         keyY.push(yCoord);
         xCoord = (kbArea.width - currentRowBounds.width) / 2;
-        console.log('xCoord = ' + xCoord);
         yCoord = yCoord + keyHeight;
         for (let keys = 0; keys < currentRow.length; keys++) {
             /*Iterate through keys of current row and generate x coordinates*/
@@ -132,11 +130,13 @@ function generateKeyCoords() {
         }
         /*Won't include edge coordinates in the arrays, deal with it in the keyPressed function*/
     }
+
+    /*Delete these lines in final version*/
     console.log(keyX);
     console.log(keyY);
 
     /*Map values in keyX and keyY to the keys*/
-
+    
 }
 
 function practiceSession() {
