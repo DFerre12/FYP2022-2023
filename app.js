@@ -75,6 +75,7 @@ let touchY;
 /*Store key coordinates*/
 let keyX = [];
 let keyY = [];
+let keyCoords = new Map();
 
 /*Check that kbSeshCount isn't null, otherwise other pages will fail to work*/
 if (kbSeshCount != null) {
@@ -112,10 +113,12 @@ function generateKeyCoords() {
     let rowBoundList = [topRowBounds, secRowBounds, thiRowBounds, botRowBounds];
     let xCoord = 0;
     let yCoord = 0;
+
     for (let rows = 0; rows < rowList.length; rows++) {
         /*Iterate through rows and generate y coodinates*/
         
         let currentRow = rowList[rows];
+        console.log(currentRow.length);
         let currentRowBounds = rowBoundList[rows];
         let keyHeight = currentRowBounds.height;
         let keyWidth = currentRowBounds.width / currentRow.length;
@@ -124,16 +127,20 @@ function generateKeyCoords() {
         yCoord = yCoord + keyHeight;
         for (let keys = 0; keys < currentRow.length; keys++) {
             /*Iterate through keys of current row and generate x coordinates*/
-            
             keyX.push(xCoord);
             xCoord = xCoord + keyWidth;
         }
+
+        /*
+        for (let )
+    
         /*Won't include edge coordinates in the arrays, deal with it in the keyPressed function*/
     }
 
     /*Delete these lines in final version*/
     console.log(keyX);
     console.log(keyY);
+    console.log(keyCoords);
 
     /*Map values in keyX and keyY to the keys*/
     
@@ -182,8 +189,74 @@ if (keyboardArea != null) {
 
 
 function keyPressed() {
-    console.log('Key\'s been pressed')
-    keyboardInput.value += 'f';
+    console.log('Key\'s been pressed');
+    
+
+    /*Don't like it, infact I hate it. Please be another way...*/
+    if (touchY >= keyY[0] && touchY < keyY[1]) {
+            if (touchX > keyX[0] && touchX < keyX[1]) {
+            keyboardInput.value += 'q';
+            } else if (touchX > keyX[1] && touchX < keyX[2]) {
+                keyboardInput.value += 'w';
+            } else if (touchX > keyX[2] && touchX < keyX[3]) {
+                keyboardInput.value += 'e';
+            } else if (touchX > keyX[3] && touchX < keyX[4]) {
+                keyboardInput.value += 'r';
+            } else if (touchX > keyX[4] && touchX < keyX[5]) {
+                keyboardInput.value += 't';
+            } else if (touchX > keyX[5] && touchX < keyX[6]) {
+                keyboardInput.value += 'y';
+            } else if (touchX > keyX[6] && touchX < keyX[7]) {
+                keyboardInput.value += 'u';
+            } else if (touchX > keyX[7] && touchX < keyX[8]) {
+                keyboardInput.value += 'i';
+            } else if (touchX > keyX[8] && touchX < keyX[9]) {
+                keyboardInput.value += 'o';
+            } else {
+                keyboardInput.value += 'p';
+            }
+    } else if (touchY >= keyY[1] && touchY < keyY[2]) {
+        if (touchX > keyX[10] && touchX < keyX[11]) {
+            keyboardInput.value += 'a';
+            } else if (touchX > keyX[11] && touchX < keyX[12]) {
+                keyboardInput.value += 's';
+            } else if (touchX > keyX[12] && touchX < keyX[13]) {
+                keyboardInput.value += 'd';
+            } else if (touchX > keyX[13] && touchX < keyX[14]) {
+                keyboardInput.value += 'f';
+            } else if (touchX > keyX[14] && touchX < keyX[15]) {
+                keyboardInput.value += 'g';
+            } else if (touchX > keyX[15] && touchX < keyX[16]) {
+                keyboardInput.value += 'h';
+            } else if (touchX > keyX[16] && touchX < keyX[17]) {
+                keyboardInput.value += 'j';
+            } else if (touchX > keyX[17] && touchX < keyX[18]) {
+                keyboardInput.value += 'k';
+            } else {
+                keyboardInput.value += 'l';
+            } 
+
+    } else if (touchY >= keyY[2] && touchY < keyY[3]) {
+        if (touchX > keyX[19] && touchX < keyX[20]) {
+            keyboardInput.value += 'z';
+            } else if (touchX > keyX[20] && touchX < keyX[21]) {
+                keyboardInput.value += 'x';
+            } else if (touchX > keyX[21] && touchX < keyX[22]) {
+                keyboardInput.value += 'c';
+            } else if (touchX > keyX[22] && touchX < keyX[23]) {
+                keyboardInput.value += 'v';
+            } else if (touchX > keyX[23] && touchX < keyX[24]) {
+                keyboardInput.value += 'b';
+            } else if (touchX > keyX[24] && touchX < keyX[25]) {
+                keyboardInput.value += 'n';
+            } else if (touchX > keyX[25] && touchX < keyX[26]) {
+                keyboardInput.value += 'm';
+            } else {
+                keyboardInput.value += 'del (not proper behaviour you will fix it!)';
+            }
+    } else {
+        return false;
+    }
 }
 
 function phraseTyped() {
