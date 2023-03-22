@@ -75,7 +75,6 @@ let touchY;
 /*Store key coordinates*/
 let keyX = [];
 let keyY = [];
-let keyCoords = new Map();
 
 /*Check that kbSeshCount isn't null, otherwise other pages will fail to work*/
 if (kbSeshCount != null) {
@@ -87,8 +86,7 @@ if (kbSeshCount != null) {
 
 
 
-/*Check that phraseCounter isn't null, otherwise other pages will fail to work*/
-if (phraseCounter != null) {
+function updatePhraseCount() {
     phraseCounter.textContent = `Phrases typed ${phraseCount}/5`;
 }
 
@@ -116,7 +114,6 @@ function generateKeyCoords() {
 
     for (let rows = 0; rows < rowList.length; rows++) {
         /*Iterate through rows and generate y coodinates*/
-        
         let currentRow = rowList[rows];
         let currentRowBounds = rowBoundList[rows];
         let keyHeight = currentRowBounds.height;
@@ -134,7 +131,7 @@ function generateKeyCoords() {
         keyX.push(xCoord);
     }
 
-keyY.push(yCoord);
+     keyY.push(yCoord);
     /*Delete these lines in final version*/
     console.log(keyX);
     console.log(keyY);
@@ -172,8 +169,6 @@ if (keyboardArea != null) {
     });
     
     keyboardArea.addEventListener("touchend", () => {
-        /*console.log(touchX);
-        console.log(touchY);*/
         keyPressed();
         if (keyboardInput.value === phrases.textContent) {
             phraseTyped();
@@ -247,8 +242,8 @@ function keyPressed() {
                 keyboardInput.value += 'n';
             } else if (touchX > keyX[27] && touchX < keyX[28]) {
                 keyboardInput.value += 'm';
-            } else if (touchX > keyX[28] && keyX < keyX[29]) {
-                keyboardInput.value += 'del (not proper behaviour you will fix it!)';
+            } else if (touchX > keyX[28] && touchX < keyX[29]) {
+                keyboardInput.value += 'Fix this when the error calculation thing is being built';
             } else {
                 return false;
             }
