@@ -118,32 +118,26 @@ function generateKeyCoords() {
         /*Iterate through rows and generate y coodinates*/
         
         let currentRow = rowList[rows];
-        console.log(currentRow.length);
         let currentRowBounds = rowBoundList[rows];
         let keyHeight = currentRowBounds.height;
         let keyWidth = currentRowBounds.width / currentRow.length;
         keyY.push(yCoord);
         xCoord = (kbArea.width - currentRowBounds.width) / 2;
-        yCoord = yCoord + keyHeight;
+        yCoord += keyHeight;
+
         for (let keys = 0; keys < currentRow.length; keys++) {
             /*Iterate through keys of current row and generate x coordinates*/
             keyX.push(xCoord);
-            xCoord = xCoord + keyWidth;
+            xCoord += keyWidth;
         }
 
-        /*
-        for (let )
-    
-        /*Won't include edge coordinates in the arrays, deal with it in the keyPressed function*/
+        keyX.push(xCoord);
     }
 
+keyY.push(yCoord);
     /*Delete these lines in final version*/
     console.log(keyX);
     console.log(keyY);
-    console.log(keyCoords);
-
-    /*Map values in keyX and keyY to the keys*/
-    
 }
 
 function practiceSession() {
@@ -177,20 +171,18 @@ if (keyboardArea != null) {
         touchY = e.touches[0].clientY - kbArea.top;
     });
     
-    keyboardArea.addEventListener("touchend", (e) => {
-        console.log(touchX);
-        console.log(touchY);
+    keyboardArea.addEventListener("touchend", () => {
+        /*console.log(touchX);
+        console.log(touchY);*/
         keyPressed();
-        if (keyboardInput.value === phrases.innerHTML) {
+        if (keyboardInput.value === phrases.textContent) {
             phraseTyped();
         };
     });
 }
 
 
-function keyPressed() {
-    console.log('Key\'s been pressed');
-    
+function keyPressed() {    
 
     /*Don't like it, infact I hate it. Please be another way...*/
     if (touchY >= keyY[0] && touchY < keyY[1]) {
@@ -212,48 +204,60 @@ function keyPressed() {
                 keyboardInput.value += 'i';
             } else if (touchX > keyX[8] && touchX < keyX[9]) {
                 keyboardInput.value += 'o';
-            } else {
+            } else if (touchX > keyX[9] && touchX < keyX[10]) {
                 keyboardInput.value += 'p';
+            } else {
+                return false;
             }
     } else if (touchY >= keyY[1] && touchY < keyY[2]) {
-        if (touchX > keyX[10] && touchX < keyX[11]) {
+        if (touchX > keyX[11] && touchX < keyX[12]) {
             keyboardInput.value += 'a';
-            } else if (touchX > keyX[11] && touchX < keyX[12]) {
-                keyboardInput.value += 's';
             } else if (touchX > keyX[12] && touchX < keyX[13]) {
-                keyboardInput.value += 'd';
+                keyboardInput.value += 's';
             } else if (touchX > keyX[13] && touchX < keyX[14]) {
-                keyboardInput.value += 'f';
+                keyboardInput.value += 'd';
             } else if (touchX > keyX[14] && touchX < keyX[15]) {
-                keyboardInput.value += 'g';
+                keyboardInput.value += 'f';
             } else if (touchX > keyX[15] && touchX < keyX[16]) {
-                keyboardInput.value += 'h';
+                keyboardInput.value += 'g';
             } else if (touchX > keyX[16] && touchX < keyX[17]) {
-                keyboardInput.value += 'j';
+                keyboardInput.value += 'h';
             } else if (touchX > keyX[17] && touchX < keyX[18]) {
+                keyboardInput.value += 'j';
+            } else if (touchX > keyX[18] && touchX < keyX[19]) {
                 keyboardInput.value += 'k';
-            } else {
+            } else if (touchX > keyX[19] && touchX < keyX[20]) {
                 keyboardInput.value += 'l';
-            } 
+            } else {
+                return false;
+            }
 
     } else if (touchY >= keyY[2] && touchY < keyY[3]) {
-        if (touchX > keyX[19] && touchX < keyX[20]) {
+        if (touchX > keyX[21] && touchX < keyX[22]) {
             keyboardInput.value += 'z';
-            } else if (touchX > keyX[20] && touchX < keyX[21]) {
-                keyboardInput.value += 'x';
-            } else if (touchX > keyX[21] && touchX < keyX[22]) {
-                keyboardInput.value += 'c';
             } else if (touchX > keyX[22] && touchX < keyX[23]) {
-                keyboardInput.value += 'v';
+                keyboardInput.value += 'x';
             } else if (touchX > keyX[23] && touchX < keyX[24]) {
-                keyboardInput.value += 'b';
+                keyboardInput.value += 'c';
             } else if (touchX > keyX[24] && touchX < keyX[25]) {
-                keyboardInput.value += 'n';
+                keyboardInput.value += 'v';
             } else if (touchX > keyX[25] && touchX < keyX[26]) {
+                keyboardInput.value += 'b';
+            } else if (touchX > keyX[26] && touchX < keyX[27]) {
+                keyboardInput.value += 'n';
+            } else if (touchX > keyX[27] && touchX < keyX[28]) {
                 keyboardInput.value += 'm';
-            } else {
+            } else if (touchX > keyX[28] && keyX < keyX[29]) {
                 keyboardInput.value += 'del (not proper behaviour you will fix it!)';
+            } else {
+                return false;
             }
+    } else if (touchY >= keyY[3] && touchY < keyY[4]) {
+        if (touchX > keyX[30] && touchX < keyX[31]) {
+            keyboardInput.value += ' ';
+        } else {
+            return false;
+        }
     } else {
         return false;
     }
