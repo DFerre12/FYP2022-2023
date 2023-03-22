@@ -24,12 +24,6 @@ form {
     margin: 0.5rem;
 }
 
-/*.clauseCheck {
-    width: 2em;
-    height: 2em;
-    vertical-align: middle;
-}*/
-
 .nextBtn {
     background-color: rgb(255, 255, 255);
     border: none;
@@ -43,6 +37,10 @@ form {
     border: 1px solid black;
     border-radius: 10px;
     box-sizing: border-box;
+}
+
+#phrases {
+    margin: 0.5rem;
 }
 
 #keyboardInput {

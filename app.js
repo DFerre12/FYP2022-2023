@@ -55,12 +55,13 @@ function updateCheckCount() {
     }
 
 
-/*Experiment page code*/
+//Experiment page code
 
 const kbSeshCount = document.querySelector('#kbSeshCount');
 const phraseCounter = document.querySelector('#phraseCounter');
-let phraseCount = '0';
-const phrases = document.getElementById('phrases');
+const phraseBox = document.getElementById('phrases');
+let phrases = ['q'];
+let phraseArrLen = phrases.length;
 const keyboardArea = document.getElementById('keyboard');
 if (keyboardArea != null) {
     kbArea = keyboardArea.getBoundingClientRect();
@@ -68,33 +69,43 @@ if (keyboardArea != null) {
 }
 const keyboardInput = document.getElementById('keyboardInput');
 
-/*Store coordinates of most recent touch event*/
+//Store coordinates of most recent touch event
 let touchX;
 let touchY;
 
-/*Store key coordinates*/
+//Store key coordinates
 let keyX = [];
 let keyY = [];
 
-/*Check that kbSeshCount isn't null, otherwise other pages will fail to work*/
-if (kbSeshCount != null) {
-    let kbCount = '1';
-    let seshCount = '1';
-    kbSeshCount.textContent = `Keyboard ${kbCount} - Session ${seshCount}/5`;
-    document.querySelector('title').textContent = `Experiment ${seshCount} - 899549 Research Tool`;
+//Counters
+let kbCount = '1';
+let seshCount = '0';
+let phraseCount = '0';
+
+
+function updateSessionCount() {
+    seshCount ++;
+    kbSeshCount.textContent = `Keyboard ${kbCount} - Session ${seshCount}/3`;
+    if (seshCount > 3) {
+        updateKbCount();
+        seshCount = 1;
+    }
+    document.querySelector('title').textContent = `Experiment ${kbCount} - 899549 Research Tool`;
+}
+
+function updateKbCount() {
+    kbCount ++;
+    if (kbCount > 2) {
+        dispCompScreen();
+    }
 }
 
 
-
-function updatePhraseCount() {
-    phraseCounter.textContent = `Phrases typed ${phraseCount}/5`;
-}
-
-/*Generate keyboard and start practice session*/
-
+//Generate keyboard and start practice session
 if (window.location.pathname.includes('experiment.html')) {
-    practiceSession();
+    updateSessionCount();
     generateKeyCoords();
+    practiceSession();
 }
 
 /*Generate coordinates for keys on standard keyboard*/
@@ -133,24 +144,22 @@ function generateKeyCoords() {
 
      keyY.push(yCoord);
     /*Delete these lines in final version*/
-    console.log(keyX);
-    console.log(keyY);
+    /*console.log(keyX);
+    console.log(keyY);*/
 }
 
 function practiceSession() {
     
     /*Call generateKb when practice session is finished*/
+    if (kbSeshCount === null) {generateKb();}
 }
 
 /*Select 1 or 2 to give the user either the control or the test keyboard 1 = Control, 2 = Test*/
 function generateKb() {
     kbNum = Math.round(Math.random() + 1);
 
-    if (kbNum == 1) {
-        ControlKb();
-    } else if (kbNum == 2) {
-        TestKb();
-    }
+    if (kbNum === 1) {ControlKb();}
+    else if (kbNum === 2) {TestKb();}
 }
     
 
@@ -170,7 +179,7 @@ if (keyboardArea != null) {
     
     keyboardArea.addEventListener("touchend", () => {
         keyPressed();
-        if (keyboardInput.value === phrases.textContent) {
+        if (keyboardInput.value === phraseBox.textContent) {
             phraseTyped();
         };
     });
@@ -260,6 +269,10 @@ function keyPressed() {
 
 function phraseTyped() {
     phraseCount ++;
+    if (phraseCount > 5) {
+        updateSessionCount();
+        phraseCount = 1
+    }
     phraseCounter.textContent = `Phrases typed ${phraseCount}/5`;
     keyboardInput.value = '';
     newPhrase();
@@ -267,5 +280,12 @@ function phraseTyped() {
 
 /*Generate a new phrase when the user has finished typing the current one, refer to design doc*/
 function newPhrase() {
-    phrases.textContent = 'New phrase';
+    phraseBox.textContent = 'New phrase';
+    let phraseNum = Math.round(Math.random() * (phraseArrLen - 1));
+    phraseBox.textContent = phrases[phraseNum];
+}
+
+function dispCompScreen() {
+    //Not final
+    alert('Experiment complete');
 }
