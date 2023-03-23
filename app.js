@@ -85,17 +85,19 @@ let phraseCount = '0';
 
 function updateSessionCount() {
     seshCount ++;
-    kbSeshCount.textContent = `Keyboard ${kbCount} - Session ${seshCount}/3`;
+    
     if (seshCount > 3) {
         updateKbCount();
         seshCount = 1;
     }
+    kbSeshCount.textContent = `Keyboard ${kbCount} - Session ${seshCount}/3`;
     document.querySelector('title').textContent = `Experiment ${kbCount} - 899549 Research Tool`;
 }
 
 function updateKbCount() {
     kbCount ++;
     if (kbCount > 2) {
+        kbCount = 2;
         dispCompScreen();
     }
 }
@@ -108,7 +110,7 @@ if (window.location.pathname.includes('experiment.html')) {
     practiceSession();
 }
 
-/*Generate coordinates for keys on standard keyboard*/
+//Generate coordinates for keys on standard keyboard
 function generateKeyCoords() {
     let topRow = document.getElementsByClassName('topKeys');
     let topRowBounds = document.querySelector('.topRow').getBoundingClientRect();
@@ -124,7 +126,7 @@ function generateKeyCoords() {
     let yCoord = 0;
 
     for (let rows = 0; rows < rowList.length; rows++) {
-        /*Iterate through rows and generate y coodinates*/
+        //Iterate through rows and generate y coodinates
         let currentRow = rowList[rows];
         let currentRowBounds = rowBoundList[rows];
         let keyHeight = currentRowBounds.height;
@@ -150,11 +152,11 @@ function generateKeyCoords() {
 
 function practiceSession() {
     
-    /*Call generateKb when practice session is finished*/
+    //Call generateKb when practice session is finished
     if (kbSeshCount === null) {generateKb();}
 }
 
-/*Select 1 or 2 to give the user either the control or the test keyboard 1 = Control, 2 = Test*/
+//Select 1 or 2 to give the user either the control or the test keyboard 1 = Control, 2 = Test
 function generateKb() {
     kbNum = Math.round(Math.random() + 1);
 
@@ -269,16 +271,16 @@ function keyPressed() {
 
 function phraseTyped() {
     phraseCount ++;
-    if (phraseCount > 5) {
+    if (phraseCount >= 5) {
         updateSessionCount();
-        phraseCount = 1
+        phraseCount = 0
     }
     phraseCounter.textContent = `Phrases typed ${phraseCount}/5`;
     keyboardInput.value = '';
     newPhrase();
 }
 
-/*Generate a new phrase when the user has finished typing the current one, refer to design doc*/
+//Pick a new phrase when the user has finished typing the current one, refer to design doc
 function newPhrase() {
     phraseBox.textContent = 'New phrase';
     let phraseNum = Math.round(Math.random() * (phraseArrLen - 1));
