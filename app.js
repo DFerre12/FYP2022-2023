@@ -57,17 +57,24 @@ function updateCheckCount() {
 
 //Experiment page code
 
+//Elements
 const kbSeshCount = document.querySelector('#kbSeshCount');
 const phraseCounter = document.querySelector('#phraseCounter');
 const phraseBox = document.getElementById('phrases');
-let phrases = ['q'];
-let phraseArrLen = phrases.length;
+
 const keyboardArea = document.getElementById('keyboard');
 if (keyboardArea != null) {
     kbArea = keyboardArea.getBoundingClientRect();
 
 }
 const keyboardInput = document.getElementById('keyboardInput');
+
+//Phrases for the user to type
+let phrases = ['nymphs blitz quick vex dwarf jog', 'big fjords vex quick waltz nymph', 'junk mtv quiz graced by fox whelps',
+ 'brick quiz whangs jumpy veldt fox', 'two driven jocks help fax my big quiz', 'my ex pub quiz crowd gave joyful thanks', 'fake bugs put in wax jonquils drive him crazy', 
+'few black taxis drive up major roads on quiet hazy nights', 'jaded zombies acted quietly but kept driving their oxen forward'];
+
+let phraseArrLen = phrases.length;
 
 //Store coordinates of most recent touch event
 let touchX;
@@ -81,17 +88,76 @@ let keyY = [];
 let kbCount = '1';
 let seshCount = '0';
 let phraseCount = '0';
+let cursorPos = 0;
 
+let errTouches = [];
 
-function updateSessionCount() {
-    seshCount ++;
-    kbSeshCount.textContent = `Keyboard ${kbCount} - Session ${seshCount}/3`;
-    if (seshCount > 3) {
-        updateKbCount();
-        seshCount = 1;
-    }
-    document.querySelector('title').textContent = `Experiment ${kbCount} - 899549 Research Tool`;
+//Estimated WPM calculated from each word typed
+let wordTimes = [];
+//Average WPM for each session for first keyboard
+let kb1SeshWPM = [];
+//Average WPM for each session for second keyboard
+let kb2SeshWPM = [];
+
+//Generate keyboard and start practice session when experiment page loads
+if (window.location.pathname.includes('experiment.html')) {
+    //newSession();
+    generateKeyCoords();
+    practiceSession();
+    newPhrase();
 }
+
+if (keyboardArea != null) {
+    keyboardArea.addEventListener("touchstart", (e) => {
+        touchX = e.touches[0].clientX;
+        touchY = e.touches[0].clientY - kbArea.top;
+    });
+    
+    keyboardArea.addEventListener("touchend", () => {
+        keyPressed();
+        checkForError();
+        if (keyboardInput.value === phraseBox.textContent) {
+            phraseTyped();
+        };
+        if ((keyboardInput.value.length % 5) === 0) {
+            WPMTimeList();
+        }
+    });
+}
+
+function checkForError() {
+    //Something something check last value in input box against equivalent value in phrase box if it's not the same mark it as an error otherwise just continue
+    if (keyboardInput.value[cursorPos-1] !== phraseBox.textContent[cursorPos-1]) {
+        console.log('skill issue');
+        let lastErrTouches = [];
+        lastErrTouches.push('Keyboard = ' + kbCount, 'Session = ' + seshCount, 'x = ' + touchX, 'y = ' + touchY);
+        errTouches.push(lastErrTouches);
+    };
+
+
+}
+
+//Put times into the wordTimes array so that the average WPM can be calculated later
+function WPMTimeList() {
+    wordTimes.push(Date.now());
+    //console.log(wordTimes);
+}
+
+//CaLculate average WPM based on times in the wordTimes array
+function getWPM() {
+    WPMList = [];
+    for (i = 0; i < wordTimes.length; i++) {
+        WPMList.push((wordTimes[i+1] - wordTimes[i]) / 1000);
+    }
+    WPMList.pop();
+    avgWordTime = WPMList.reduce((accumulator, currentValue) =>
+        accumulator + currentValue, 0) / WPMList.length;
+    WPM = 60 / avgWordTime;
+    kb1SeshWPM.push(WPM);
+    console.log(kb1SeshWPM);
+}
+
+
 
 function updateKbCount() {
     kbCount ++;
@@ -100,13 +166,6 @@ function updateKbCount() {
     }
 }
 
-
-//Generate keyboard and start practice session
-if (window.location.pathname.includes('experiment.html')) {
-    updateSessionCount();
-    generateKeyCoords();
-    practiceSession();
-}
 
 /*Generate coordinates for keys on standard keyboard*/
 function generateKeyCoords() {
@@ -149,7 +208,8 @@ function generateKeyCoords() {
 }
 
 function practiceSession() {
-    
+    kbSeshCount.textContent = `Keyboard ${kbCount} - Practice session`;
+    document.querySelector('title').textContent = `Practice session ${kbCount} - 899549 Research Tool`;
     /*Call generateKb when practice session is finished*/
     if (kbSeshCount === null) {generateKb();}
 }
@@ -171,23 +231,9 @@ function TestKb() {
     console.log('Using test keyboard');
 }
 
-if (keyboardArea != null) {
-        keyboardArea.addEventListener("touchstart", (e) => {
-        touchX = e.touches[0].clientX;
-        touchY = e.touches[0].clientY - kbArea.top;
-    });
-    
-    keyboardArea.addEventListener("touchend", () => {
-        keyPressed();
-        if (keyboardInput.value === phraseBox.textContent) {
-            phraseTyped();
-        };
-    });
-}
-
 
 function keyPressed() {    
-
+    cursorPos++;
     /*Don't like it, infact I hate it. Please be another way...*/
     if (touchY >= keyY[0] && touchY < keyY[1]) {
             if (touchX > keyX[0] && touchX < keyX[1]) {
@@ -265,16 +311,19 @@ function keyPressed() {
     } else {
         return false;
     }
+
+
 }
 
 function phraseTyped() {
     phraseCount ++;
     if (phraseCount > 5) {
-        updateSessionCount();
+        newSession();
         phraseCount = 1
     }
-    phraseCounter.textContent = `Phrases typed ${phraseCount}/5`;
+    phraseCounter.textContent = `Phrases typed: ${phraseCount}/5`;
     keyboardInput.value = '';
+    wordTimes = [];
     newPhrase();
 }
 
@@ -283,6 +332,18 @@ function newPhrase() {
     phraseBox.textContent = 'New phrase';
     let phraseNum = Math.round(Math.random() * (phraseArrLen - 1));
     phraseBox.textContent = phrases[phraseNum];
+}
+
+function newSession() {
+    getWPM();
+    seshCount ++;
+    kbSeshCount.textContent = `Keyboard ${kbCount} - Session ${seshCount}/3`;
+    if (seshCount > 3) {
+        updateKbCount();
+        seshCount = 1;
+    }
+    document.querySelector('title').textContent = `Experiment ${kbCount} - 899549 Research Tool`;
+    wordTimes = [];
 }
 
 function dispCompScreen() {
