@@ -92,6 +92,8 @@ let cursorPos = 0;
 
 let errTouches = [];
 
+//List of times taken to type 5 characters - public scope so that the backspace key can remove the last value
+WPMList = [];
 //Estimated WPM calculated from each word typed
 let wordTimes = [];
 //Average WPM for each session for first keyboard
@@ -140,17 +142,15 @@ function checkForError() {
 //Put times into the wordTimes array so that the average WPM can be calculated later
 function WPMTimeList() {
     wordTimes.push(Date.now());
-    //console.log(wordTimes);
 }
 
 //CaLculate average WPM based on times in the wordTimes array
 function getWPM() {
-    WPMList = [];
     for (i = 0; i < wordTimes.length; i++) {
         WPMList.push((wordTimes[i+1] - wordTimes[i]) / 1000);
     }
     WPMList.pop();
-    avgWordTime = WPMList.reduce((accumulator, currentValue) =>
+    let avgWordTime = WPMList.reduce((accumulator, currentValue) =>
         accumulator + currentValue, 0) / WPMList.length;
     WPM = 60 / avgWordTime;
     kb1SeshWPM.push(WPM);
@@ -298,7 +298,11 @@ function keyPressed() {
             } else if (touchX > keyX[27] && touchX < keyX[28]) {
                 keyboardInput.value += 'm';
             } else if (touchX > keyX[28] && touchX < keyX[29]) {
-                keyboardInput.value += 'Fix this when the error calculation thing is being built';
+                //Cringe hacks (I hate this function)
+                cursorPos--;
+                keyboardInput.value = keyboardInput.value.slice(0, cursorPos-1);
+                cursorPos--;
+                WPMList.pop();
             } else {
                 return false;
             }
@@ -311,8 +315,6 @@ function keyPressed() {
     } else {
         return false;
     }
-
-
 }
 
 function phraseTyped() {
