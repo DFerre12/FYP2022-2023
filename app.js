@@ -76,21 +76,29 @@ let phrases = ['nymphs blitz quick vex dwarf jog', 'big fjords vex quick waltz n
 
 let phraseArrLen = phrases.length;
 
-//Store coordinates of most recent touch event
-let touchX;
-let touchY;
-
 //Store key coordinates
 let keyX = [];
 let keyY = [];
 
+//Store coordinates of most recent touch event
+let touchX;
+let touchY;
+
 //Counters
 let kbCount = '1';
+//Current session
 let seshCount = '0';
+//Amount of phrases typed in current session
 let phraseCount = '0';
+//Position of cursor on the input box
 let cursorPos = 0;
 
+//Store key pressed and its location when the user makes an erroneous keystroke
 let errTouches = [];
+//Error rate for each session on the first keyboard
+let kb1SeshErrs = [];
+//Error rate for each session on the second keyboard
+let kb2SeshErrs = [];
 
 //List of times taken to type 5 characters - public scope so that the backspace key can remove the last value
 WPMList = [];
@@ -132,11 +140,16 @@ function checkForError() {
     if (keyboardInput.value[cursorPos-1] !== phraseBox.textContent[cursorPos-1]) {
         console.log('skill issue');
         let lastErrTouches = [];
-        lastErrTouches.push('Keyboard = ' + kbCount, 'Session = ' + seshCount, 'x = ' + touchX, 'y = ' + touchY);
+        lastErrTouches.push(`key pressed: ${keyboardInput.value.slice(cursorPos - 1, cursorPos)}`, `Expected key: ${phraseBox.textContent[cursorPos - 1]}`, `x = ${touchX}`, `y = ${touchY}`);
         errTouches.push(lastErrTouches);
     };
 
 
+}
+
+function getErrorRate() {
+    kb1SeshErrs.push(/*whatever will store current session error rate*/);
+    
 }
 
 //Put times into the wordTimes array so that the average WPM can be calculated later
@@ -202,9 +215,6 @@ function generateKeyCoords() {
     }
 
      keyY.push(yCoord);
-    /*Delete these lines in final version*/
-    /*console.log(keyX);
-    console.log(keyY);*/
 }
 
 function practiceSession() {
