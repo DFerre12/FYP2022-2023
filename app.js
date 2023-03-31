@@ -100,8 +100,8 @@ let kb1SeshErrs = [];
 //Error rate for each session on the second keyboard
 let kb2SeshErrs = [];
 
-//List of times taken to type 5 characters - public scope so that the backspace key can remove the last value
-WPMList = [];
+//List of times taken in seconds to type 5 characters - public scope so that the backspace key can remove the last value
+let WPMList = [];
 //Estimated WPM calculated from each word typed
 let wordTimes = [];
 //Average WPM for each session for first keyboard
@@ -125,8 +125,7 @@ if (keyboardArea != null) {
     
     keyboardArea.addEventListener("touchend", () => {
         keyPressed();
-        checkForError();
-        if (keyboardInput.value === phraseBox.textContent) {
+        if (keyboardInput.value === phraseBox.textContent || keyboardInput.value.length === phraseBox.textContent.length) {
             phraseTyped();
         };
         if ((keyboardInput.value.length % 5) === 0) {
@@ -168,6 +167,11 @@ function getWPM() {
     WPM = 60 / avgWordTime;
     kb1SeshWPM.push(WPM);
     console.log(kb1SeshWPM);
+    for (i = 0; i < wordTimes.length; i++) {
+       wordTimes.pop(i); 
+       console.log(wordTimes);
+    }
+    wordTimes.pop(0);
 }
 
 
@@ -239,6 +243,9 @@ function ControlKb() {
 
 function TestKb() {
     console.log('Using test keyboard');
+    keyboardArea.addEventListener("touchend", () => {
+        checkForError();
+    })
 }
 
 
