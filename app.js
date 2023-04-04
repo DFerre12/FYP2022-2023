@@ -85,7 +85,7 @@ let touchX;
 let touchY;
 
 //Counters
-let kbCount = '1';
+let kbCount = '0';
 //Current session
 let seshCount = '0';
 //Amount of phrases typed in current session
@@ -95,6 +95,16 @@ let cursorPos = 0;
 
 //Store key pressed and its location when the user makes an erroneous keystroke
 let errTouches = [];
+
+
+//Number of erroneous keystrokes made while typing current phrase
+let errKs = 0;
+//Total number of keystrokes made while typing current phrase
+let totKs = 0;
+//Error rates for last typed phrase
+let lastPhrErrs = [];
+//Error rates for current session
+let currSeshErrs = [];
 //Error rate for each session on the first keyboard
 let kb1SeshErrs = [];
 //Error rate for each session on the second keyboard
@@ -125,15 +135,60 @@ if (keyboardArea != null) {
     
     keyboardArea.addEventListener("touchend", () => {
         keyPressed();
+        totKs++;
         if (keyboardInput.value === phraseBox.textContent || keyboardInput.value.length === phraseBox.textContent.length) {
             phraseTyped();
         };
         if ((keyboardInput.value.length % 5) === 0) {
             WPMTimeList();
         }
+        checkLastKey();
     });
 }
 
+//When user has typed a phrase, check for uncorrected errors and update the currSeshErrs array
+function getUnCorrErrsForLastPhrase() {
+    let errorCount = 0;
+    for (i = 0; i < keyboardInput.value.length; i++) {
+        if (keyboardInput.value[i] != phraseBox.textContent[i]) {
+            errorCount++;
+        }
+    }
+
+    errPcnt = Math.round((errorCount / phraseBox.textContent.length) * 100);
+    lastPhrErrs.push(errPcnt);
+}
+
+function getCorrErrsForLastPhrase() {
+    errPcnt = Math.round((errKs / phraseBox.textContent.length) * 100);
+    lastPhrErrs.push(errPcnt);
+    console.log(lastPhrErrs);
+    totKs = 0;
+    errKs = 0;
+}
+
+function pushPhraseErrsToSeshErrs() {
+    currSeshErrs.push(lastPhrErrs);
+    lastPhrErrs = [];
+}
+
+function checkLastKey() {
+    if (keyboardInput.value[cursorPos - 2] != phraseBox.textContent[cursorPos - 2]) {
+        errKs++;
+    }
+}
+
+//Call when user has typed a phrase
+function getLastSeshErrorRate() {
+    for (i=0; i < lastPhrErrs.length; i++) {
+
+    }
+    kb1SeshErrs.push(/*whatever will store current session error rate*/);
+    
+}
+
+
+//For adaptive keyboard
 function checkForError() {
     //Something something check last value in input box against equivalent value in phrase box if it's not the same mark it as an error otherwise just continue
     if (keyboardInput.value[cursorPos-1] !== phraseBox.textContent[cursorPos-1]) {
@@ -146,10 +201,6 @@ function checkForError() {
 
 }
 
-function getErrorRate() {
-    kb1SeshErrs.push(/*whatever will store current session error rate*/);
-    
-}
 
 //Put times into the wordTimes array so that the average WPM can be calculated later
 function WPMTimeList() {
@@ -167,11 +218,7 @@ function getWPM() {
     WPM = 60 / avgWordTime;
     kb1SeshWPM.push(WPM);
     console.log(kb1SeshWPM);
-    for (i = 0; i < wordTimes.length; i++) {
-       wordTimes.pop(i); 
-       console.log(wordTimes);
-    }
-    wordTimes.pop(0);
+    wordTimes = [];
 }
 
 
@@ -250,7 +297,6 @@ function TestKb() {
 
 
 function keyPressed() {    
-    cursorPos++;
     /*Don't like it, infact I hate it. Please be another way...*/
     if (touchY >= keyY[0] && touchY < keyY[1]) {
             if (touchX > keyX[0] && touchX < keyX[1]) {
@@ -315,10 +361,8 @@ function keyPressed() {
             } else if (touchX > keyX[27] && touchX < keyX[28]) {
                 keyboardInput.value += 'm';
             } else if (touchX > keyX[28] && touchX < keyX[29]) {
-                //Cringe hacks (I hate this function)
-                cursorPos--;
-                keyboardInput.value = keyboardInput.value.slice(0, cursorPos-1);
-                cursorPos--;
+                checkLastKey();
+                keyboardInput.value = keyboardInput.value.slice(0, cursorPos-2);
                 WPMList.pop();
             } else {
                 return false;
@@ -332,15 +376,24 @@ function keyPressed() {
     } else {
         return false;
     }
+
+    updateCursorPos();
+}
+
+function updateCursorPos() {
+    cursorPos = keyboardInput.value.length + 1;
 }
 
 function phraseTyped() {
+    getUnCorrErrsForLastPhrase();
+    getCorrErrsForLastPhrase();
+    pushPhraseErrsToSeshErrs();
     phraseCount ++;
-    if (phraseCount > 5) {
+    if (phraseCount === 3) {
         newSession();
-        phraseCount = 1
+        phraseCount = 0;
     }
-    phraseCounter.textContent = `Phrases typed: ${phraseCount}/5`;
+    phraseCounter.textContent = `Phrases typed: ${phraseCount}/3`;
     keyboardInput.value = '';
     wordTimes = [];
     newPhrase();
@@ -355,6 +408,7 @@ function newPhrase() {
 
 function newSession() {
     getWPM();
+    getLastSeshErrorRate();
     seshCount ++;
     kbSeshCount.textContent = `Keyboard ${kbCount} - Session ${seshCount}/3`;
     if (seshCount > 3) {
