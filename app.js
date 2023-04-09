@@ -69,6 +69,18 @@ if (keyboardArea != null) {
 }
 const keyboardInput = document.getElementById('keyboardInput');
 
+//Keyboard row divs
+let topRow = document.getElementsByClassName('topKeys');
+let topRowBounds = document.querySelector('.topRow').getBoundingClientRect();
+let secRow = document.getElementsByClassName('secKeys');
+let secRowBounds = document.querySelector('.secondRow').getBoundingClientRect();
+let thiRow = document.getElementsByClassName('thiKeys');
+let thiRowBounds = document.querySelector('.thirdRow').getBoundingClientRect();
+let botRow = document.getElementsByClassName('spaceKey');
+let botRowBounds = document.querySelector('.bottomRow').getBoundingClientRect();
+let rowList = [topRow, secRow, thiRow, botRow];
+let rowBoundList = [topRowBounds, secRowBounds, thiRowBounds, botRowBounds];
+
 //Phrases for the user to type
 let phrases = ['nymphs blitz quick vex dwarf jog', 'big fjords vex quick waltz nymph', 'junk mtv quiz graced by fox whelps',
     'brick quiz whangs jumpy veldt fox', 'two driven jocks help fax my big quiz', 'my ex pub quiz crowd gave joyful thanks', 'fake bugs put in wax jonquils drive him crazy',
@@ -156,16 +168,6 @@ function initKb() {
 
 /*Generate coordinates for keys on standard keyboard*/
 function generateKeyCoords() {
-    let topRow = document.getElementsByClassName('topKeys');
-    let topRowBounds = document.querySelector('.topRow').getBoundingClientRect();
-    let secRow = document.getElementsByClassName('secKeys');
-    let secRowBounds = document.querySelector('.secondRow').getBoundingClientRect();
-    let thiRow = document.getElementsByClassName('thiKeys');
-    let thiRowBounds = document.querySelector('.thirdRow').getBoundingClientRect();
-    let botRow = document.getElementsByClassName('spaceKey');
-    let botRowBounds = document.querySelector('.bottomRow').getBoundingClientRect();
-    let rowList = [topRow, secRow, thiRow, botRow];
-    let rowBoundList = [topRowBounds, secRowBounds, thiRowBounds, botRowBounds];
     let xCoord = 0;
     let yCoord = 0;
 
@@ -191,8 +193,17 @@ function generateKeyCoords() {
     keyY.push(yCoord);
 }
 
+class keyObject {
+    constructor(xCoords, yCoords) {
+        this.xCoords = keyX[xCoords], this.yCoords = keyY[yCoords], this.KPTally = 0;
+    }
+}
+
+a = new keyObject(1, 1);
+
 function experimentSession() {
     randomKb();
+    rmKeyBorders();
     keyboardArea.addEventListener("touchend", () => {
         totKs++;
 
@@ -222,6 +233,15 @@ function TestKb() {
     testKeyboard = `Keyboard ${kbCount} = Test`;
     keyboardArea.addEventListener("touchend", checkForError);
     keyboardArea.addEventListener("touchend", tallyKeyPress);
+}
+
+function rmKeyBorders() {
+    for (row = 0; row < rowList.length; row++) {
+        for (el = 0; el < rowList[row].length; el++) {
+            rowList[row][el].style.border = 'none';
+        }
+    }
+    
 }
 
 function handleKeyPress() {
