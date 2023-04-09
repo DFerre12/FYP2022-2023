@@ -9,7 +9,7 @@ if (checkPIS != null) {
         PISnext.disabled = !e.target.checked;
     }, false);
 }
-    
+
 
 /*When user presses the 'next' button, load next page*/
 /*Check that PISnext isn't null, otherwise other pages will fail to work*/
@@ -18,7 +18,7 @@ if (PISnext != null) {
         alert('worked');
     });*/
 }
-    
+
 
 /*Consent form code*/
 
@@ -44,15 +44,15 @@ function updateCheckCount() {
     let checkCount = 0;
     for (const clause of clauses) {
         if (clause.checked) {
-            checkCount ++;
+            checkCount++;
         }
     }
-        if (checkCount === clauses.length) {
-            conformNext.disabled = false;
-        } else {
-            conformNext.disabled = true;
-        }
+    if (checkCount === clauses.length) {
+        conformNext.disabled = false;
+    } else {
+        conformNext.disabled = true;
     }
+}
 
 
 //Experiment page code
@@ -63,16 +63,16 @@ const phraseCounter = document.querySelector('#phraseCounter');
 const phraseBox = document.getElementById('phrases');
 
 const keyboardArea = document.getElementById('keyboard');
+//Size of keyboard div (for key coordinate generation)
 if (keyboardArea != null) {
     kbArea = keyboardArea.getBoundingClientRect();
-
 }
 const keyboardInput = document.getElementById('keyboardInput');
 
 //Phrases for the user to type
 let phrases = ['nymphs blitz quick vex dwarf jog', 'big fjords vex quick waltz nymph', 'junk mtv quiz graced by fox whelps',
- 'brick quiz whangs jumpy veldt fox', 'two driven jocks help fax my big quiz', 'my ex pub quiz crowd gave joyful thanks', 'fake bugs put in wax jonquils drive him crazy', 
-'few black taxis drive up major roads on quiet hazy nights', 'jaded zombies acted quietly but kept driving their oxen forward'];
+    'brick quiz whangs jumpy veldt fox', 'two driven jocks help fax my big quiz', 'my ex pub quiz crowd gave joyful thanks', 'fake bugs put in wax jonquils drive him crazy',
+    'few black taxis drive up major roads on quiet hazy nights', 'jaded zombies acted quietly but kept driving their oxen forward'];
 
 let phraseArrLen = phrases.length;
 
@@ -80,11 +80,22 @@ let phraseArrLen = phrases.length;
 let keyX = [];
 let keyY = [];
 
+//Store key coordinates for adaptive keyboard
+let adaptKeyX;
+let adaptKeyY;
+
+//Key coordinates for currently used keyboard
+let currKeyX;
+let currKeyY;
+
 //Store coordinates of most recent touch event
 let touchX;
 let touchY;
 
 //Counters
+//Keyboard mode: 0=Practice, 1=Control, 2=Test
+let kbNum = 0;
+//Current keyboard 0=Practice, 1=First keyboard, 2=Second keyboard
 let kbCount = '0';
 //Current session
 let seshCount = '0';
@@ -93,23 +104,23 @@ let phraseCount = '0';
 //Position of cursor on the input box
 let cursorPos = 0;
 
+//Error storage
 //Store key pressed and its location when the user makes an erroneous keystroke
 let errTouches = [];
-
-
 //Number of erroneous keystrokes made while typing current phrase
 let errKs = 0;
 //Total number of keystrokes made while typing current phrase
 let totKs = 0;
 //Error rates for last typed phrase
 let lastPhrErrs = [];
-//Error rates for current session
-let currSeshErrs = [];
+//Error rates for current keyboard
+let currKbErrs = [];
 //Error rate for each session on the first keyboard
 let kb1SeshErrs = [];
 //Error rate for each session on the second keyboard
 let kb2SeshErrs = [];
 
+//Typing speed storage
 //List of times taken in seconds to type 5 characters - public scope so that the backspace key can remove the last value
 let WPMList = [];
 //Estimated WPM calculated from each word typed
@@ -119,117 +130,29 @@ let kb1SeshWPM = [];
 //Average WPM for each session for second keyboard
 let kb2SeshWPM = [];
 
+
 //Generate keyboard and start practice session when experiment page loads
 if (window.location.pathname.includes('experiment.html')) {
     //newSession();
     generateKeyCoords();
-    practiceSession();
+    initKb();
+    updateDisplays();
     newPhrase();
 }
 
-if (keyboardArea != null) {
+function initKb() {
     keyboardArea.addEventListener("touchstart", (e) => {
         touchX = e.touches[0].clientX;
         touchY = e.touches[0].clientY - kbArea.top;
     });
-    
+
     keyboardArea.addEventListener("touchend", () => {
-        keyPressed();
-        totKs++;
-        if (keyboardInput.value === phraseBox.textContent || keyboardInput.value.length === phraseBox.textContent.length) {
+        handleKeyPress();
+        if (keyboardInput.value.length === phraseBox.textContent.length) {
             phraseTyped();
         };
-        if ((keyboardInput.value.length % 5) === 0) {
-            WPMTimeList();
-        }
-        checkLastKey();
     });
 }
-
-//When user has typed a phrase, check for uncorrected errors and update the currSeshErrs array
-function getUnCorrErrsForLastPhrase() {
-    let errorCount = 0;
-    for (i = 0; i < keyboardInput.value.length; i++) {
-        if (keyboardInput.value[i] != phraseBox.textContent[i]) {
-            errorCount++;
-        }
-    }
-
-    errPcnt = Math.round((errorCount / phraseBox.textContent.length) * 100);
-    lastPhrErrs.push(errPcnt);
-}
-
-function getCorrErrsForLastPhrase() {
-    errPcnt = Math.round((errKs / phraseBox.textContent.length) * 100);
-    lastPhrErrs.push(errPcnt);
-    console.log(lastPhrErrs);
-    totKs = 0;
-    errKs = 0;
-}
-
-function pushPhraseErrsToSeshErrs() {
-    currSeshErrs.push(lastPhrErrs);
-    lastPhrErrs = [];
-}
-
-function checkLastKey() {
-    if (keyboardInput.value[cursorPos - 2] != phraseBox.textContent[cursorPos - 2]) {
-        errKs++;
-    }
-}
-
-//Call when user has typed a phrase
-function getLastSeshErrorRate() {
-    for (i=0; i < lastPhrErrs.length; i++) {
-
-    }
-    kb1SeshErrs.push(/*whatever will store current session error rate*/);
-    
-}
-
-
-//For adaptive keyboard
-function checkForError() {
-    //Something something check last value in input box against equivalent value in phrase box if it's not the same mark it as an error otherwise just continue
-    if (keyboardInput.value[cursorPos-1] !== phraseBox.textContent[cursorPos-1]) {
-        console.log('skill issue');
-        let lastErrTouches = [];
-        lastErrTouches.push(`key pressed: ${keyboardInput.value.slice(cursorPos - 1, cursorPos)}`, `Expected key: ${phraseBox.textContent[cursorPos - 1]}`, `x = ${touchX}`, `y = ${touchY}`);
-        errTouches.push(lastErrTouches);
-    };
-
-
-}
-
-
-//Put times into the wordTimes array so that the average WPM can be calculated later
-function WPMTimeList() {
-    wordTimes.push(Date.now());
-}
-
-//CaLculate average WPM based on times in the wordTimes array
-function getWPM() {
-    for (i = 0; i < wordTimes.length; i++) {
-        WPMList.push((wordTimes[i+1] - wordTimes[i]) / 1000);
-    }
-    WPMList.pop();
-    let avgWordTime = WPMList.reduce((accumulator, currentValue) =>
-        accumulator + currentValue, 0) / WPMList.length;
-    WPM = 60 / avgWordTime;
-    kb1SeshWPM.push(WPM);
-    console.log(kb1SeshWPM);
-    wordTimes = [];
-}
-
-
-
-function updateKbCount() {
-    kbCount ++;
-    if (kbCount > 2) {
-        dispCompScreen();
-    }
-}
-
 
 /*Generate coordinates for keys on standard keyboard*/
 function generateKeyCoords() {
@@ -265,110 +188,131 @@ function generateKeyCoords() {
         keyX.push(xCoord);
     }
 
-     keyY.push(yCoord);
+    keyY.push(yCoord);
 }
 
-function practiceSession() {
-    kbSeshCount.textContent = `Keyboard ${kbCount} - Practice session`;
-    document.querySelector('title').textContent = `Practice session ${kbCount} - 899549 Research Tool`;
-    /*Call generateKb when practice session is finished*/
-    if (kbSeshCount === null) {generateKb();}
+function experimentSession() {
+    randomKb();
+    keyboardArea.addEventListener("touchend", () => {
+        totKs++;
+
+        if ((keyboardInput.value.length % 5) === 0) {
+            WPMTimeList();
+        }
+        checkLastKey();
+    });
 }
 
 /*Select 1 or 2 to give the user either the control or the test keyboard 1 = Control, 2 = Test*/
-function generateKb() {
+function randomKb() {
     kbNum = Math.round(Math.random() + 1);
 
-    if (kbNum === 1) {ControlKb();}
-    else if (kbNum === 2) {TestKb();}
+    if (kbNum === 1) { ControlKb() }
+    else if (kbNum === 2) { TestKb() };
 }
-    
-
 function ControlKb() {
     console.log('Using control keyboard');
+    controlKeyboard = `Keyboard ${kbCount} = Control`;
 }
 
 function TestKb() {
     console.log('Using test keyboard');
-    keyboardArea.addEventListener("touchend", () => {
-        checkForError();
-    })
+    adaptKeyX = keyX;
+    adaptKeyY = keyY;
+    testKeyboard = `Keyboard ${kbCount} = Test`;
+    keyboardArea.addEventListener("touchend", checkForError);
+    keyboardArea.addEventListener("touchend", tallyKeyPress);
 }
 
+function handleKeyPress() {
+    switch(kbNum) {
+        case (0):
+            keyPressed(keyX, keyY);
+            break;
+        case (1):
+            keyPressed(keyX, keyY);
+            break;
+        case (2):
+            keyPressed(adaptKeyX, adaptKeyY);
+            break;
+        default:
+            break;
+    }
+}
 
-function keyPressed() {    
+function keyPressed(xKeyCoords, yKeyCoords) {
     /*Don't like it, infact I hate it. Please be another way...*/
-    if (touchY >= keyY[0] && touchY < keyY[1]) {
-            if (touchX > keyX[0] && touchX < keyX[1]) {
+    if (touchY >= yKeyCoords[0] && touchY < yKeyCoords[1]) {
+        if (touchX > xKeyCoords[0] && touchX < xKeyCoords[1]) {
             keyboardInput.value += 'q';
-            } else if (touchX > keyX[1] && touchX < keyX[2]) {
-                keyboardInput.value += 'w';
-            } else if (touchX > keyX[2] && touchX < keyX[3]) {
-                keyboardInput.value += 'e';
-            } else if (touchX > keyX[3] && touchX < keyX[4]) {
-                keyboardInput.value += 'r';
-            } else if (touchX > keyX[4] && touchX < keyX[5]) {
-                keyboardInput.value += 't';
-            } else if (touchX > keyX[5] && touchX < keyX[6]) {
-                keyboardInput.value += 'y';
-            } else if (touchX > keyX[6] && touchX < keyX[7]) {
-                keyboardInput.value += 'u';
-            } else if (touchX > keyX[7] && touchX < keyX[8]) {
-                keyboardInput.value += 'i';
-            } else if (touchX > keyX[8] && touchX < keyX[9]) {
-                keyboardInput.value += 'o';
-            } else if (touchX > keyX[9] && touchX < keyX[10]) {
-                keyboardInput.value += 'p';
-            } else {
-                return false;
-            }
-    } else if (touchY >= keyY[1] && touchY < keyY[2]) {
-        if (touchX > keyX[11] && touchX < keyX[12]) {
+        } else if (touchX > xKeyCoords[1] && touchX < xKeyCoords[2]) {
+            keyboardInput.value += 'w';
+        } else if (touchX > xKeyCoords[2] && touchX < xKeyCoords[3]) {
+            keyboardInput.value += 'e';
+        } else if (touchX > xKeyCoords[3] && touchX < xKeyCoords[4]) {
+            keyboardInput.value += 'r';
+        } else if (touchX > xKeyCoords[4] && touchX < xKeyCoords[5]) {
+            keyboardInput.value += 't';
+        } else if (touchX > xKeyCoords[5] && touchX < xKeyCoords[6]) {
+            keyboardInput.value += 'y';
+        } else if (touchX > xKeyCoords[6] && touchX < xKeyCoords[7]) {
+            keyboardInput.value += 'u';
+        } else if (touchX > xKeyCoords[7] && touchX < xKeyCoords[8]) {
+            keyboardInput.value += 'i';
+        } else if (touchX > xKeyCoords[8] && touchX < xKeyCoords[9]) {
+            keyboardInput.value += 'o';
+        } else if (touchX > xKeyCoords[9] && touchX < xKeyCoords[10]) {
+            keyboardInput.value += 'p';
+        } else {
+            return false;
+        }
+    } else if (touchY >= yKeyCoords[1] && touchY < yKeyCoords[2]) {
+        if (touchX > xKeyCoords[11] && touchX < xKeyCoords[12]) {
             keyboardInput.value += 'a';
-            } else if (touchX > keyX[12] && touchX < keyX[13]) {
-                keyboardInput.value += 's';
-            } else if (touchX > keyX[13] && touchX < keyX[14]) {
-                keyboardInput.value += 'd';
-            } else if (touchX > keyX[14] && touchX < keyX[15]) {
-                keyboardInput.value += 'f';
-            } else if (touchX > keyX[15] && touchX < keyX[16]) {
-                keyboardInput.value += 'g';
-            } else if (touchX > keyX[16] && touchX < keyX[17]) {
-                keyboardInput.value += 'h';
-            } else if (touchX > keyX[17] && touchX < keyX[18]) {
-                keyboardInput.value += 'j';
-            } else if (touchX > keyX[18] && touchX < keyX[19]) {
-                keyboardInput.value += 'k';
-            } else if (touchX > keyX[19] && touchX < keyX[20]) {
-                keyboardInput.value += 'l';
-            } else {
-                return false;
-            }
+        } else if (touchX > xKeyCoords[12] && touchX < xKeyCoords[13]) {
+            keyboardInput.value += 's';
+        } else if (touchX > xKeyCoords[13] && touchX < xKeyCoords[14]) {
+            keyboardInput.value += 'd';
+        } else if (touchX > xKeyCoords[14] && touchX < xKeyCoords[15]) {
+            keyboardInput.value += 'f';
+        } else if (touchX > xKeyCoords[15] && touchX < xKeyCoords[16]) {
+            keyboardInput.value += 'g';
+        } else if (touchX > xKeyCoords[16] && touchX < xKeyCoords[17]) {
+            keyboardInput.value += 'h';
+        } else if (touchX > xKeyCoords[17] && touchX < xKeyCoords[18]) {
+            keyboardInput.value += 'j';
+        } else if (touchX > xKeyCoords[18] && touchX < xKeyCoords[19]) {
+            keyboardInput.value += 'k';
+        } else if (touchX > xKeyCoords[19] && touchX < xKeyCoords[20]) {
+            keyboardInput.value += 'l';
+        } else {
+            return false;
+        }
 
-    } else if (touchY >= keyY[2] && touchY < keyY[3]) {
-        if (touchX > keyX[21] && touchX < keyX[22]) {
+    } else if (touchY >= yKeyCoords[2] && touchY < yKeyCoords[3]) {
+        if (touchX > xKeyCoords[21] && touchX < xKeyCoords[22]) {
             keyboardInput.value += 'z';
-            } else if (touchX > keyX[22] && touchX < keyX[23]) {
-                keyboardInput.value += 'x';
-            } else if (touchX > keyX[23] && touchX < keyX[24]) {
-                keyboardInput.value += 'c';
-            } else if (touchX > keyX[24] && touchX < keyX[25]) {
-                keyboardInput.value += 'v';
-            } else if (touchX > keyX[25] && touchX < keyX[26]) {
-                keyboardInput.value += 'b';
-            } else if (touchX > keyX[26] && touchX < keyX[27]) {
-                keyboardInput.value += 'n';
-            } else if (touchX > keyX[27] && touchX < keyX[28]) {
-                keyboardInput.value += 'm';
-            } else if (touchX > keyX[28] && touchX < keyX[29]) {
-                checkLastKey();
-                keyboardInput.value = keyboardInput.value.slice(0, cursorPos-2);
-                WPMList.pop();
-            } else {
-                return false;
-            }
-    } else if (touchY >= keyY[3] && touchY < keyY[4]) {
-        if (touchX > keyX[30] && touchX < keyX[31]) {
+        } else if (touchX > xKeyCoords[22] && touchX < xKeyCoords[23]) {
+            keyboardInput.value += 'x';
+        } else if (touchX > xKeyCoords[23] && touchX < xKeyCoords[24]) {
+            keyboardInput.value += 'c';
+        } else if (touchX > xKeyCoords[24] && touchX < xKeyCoords[25]) {
+            keyboardInput.value += 'v';
+        } else if (touchX > xKeyCoords[25] && touchX < xKeyCoords[26]) {
+            keyboardInput.value += 'b';
+        } else if (touchX > xKeyCoords[26] && touchX < xKeyCoords[27]) {
+            keyboardInput.value += 'n';
+        } else if (touchX > xKeyCoords[27] && touchX < xKeyCoords[28]) {
+            keyboardInput.value += 'm';
+        } else if (touchX > xKeyCoords[28] && touchX < xKeyCoords[29]) {
+            checkLastKey();
+            keyboardInput.value = keyboardInput.value.slice(0, cursorPos - 2);
+            WPMList.pop();
+        } else {
+            return false;
+        }
+    } else if (touchY >= yKeyCoords[3] && touchY < yKeyCoords[4]) {
+        if (touchX > xKeyCoords[30] && touchX < xKeyCoords[31]) {
             keyboardInput.value += ' ';
         } else {
             return false;
@@ -384,16 +328,130 @@ function updateCursorPos() {
     cursorPos = keyboardInput.value.length + 1;
 }
 
+
+//When user has typed a phrase, check for uncorrected errors
+function getUnCorrErrsForLastPhrase() {
+    let errorCount = 0;
+    //Iterate through the input box and check the values against the phrase - tally errors when found
+    for (i = 0; i < keyboardInput.value.length; i++) {
+        if (keyboardInput.value[i] != phraseBox.textContent[i]) {
+            errorCount++;
+        }
+    }
+
+    //Get error rate percentage and push into lastPhrErrs
+    errPcnt = Math.round((errorCount / phraseBox.textContent.length) * 100);
+    lastPhrErrs.push(errPcnt);
+}
+
+function getCorrErrsForLastPhrase() {
+    errPcnt = Math.round((errKs / phraseBox.textContent.length) * 100);
+    lastPhrErrs.push(errPcnt);
+    totKs = 0;
+    errKs = 0;
+}
+
+function checkLastKey() {
+    if (keyboardInput.value[cursorPos - 2] != phraseBox.textContent[cursorPos - 2]) {
+        errKs++;
+    }
+}
+
+function pushPhraseErrsToKbErrs() {
+    currKbErrs.push(lastPhrErrs);
+    lastPhrErrs = [];
+}
+
+//Call when user has typed a phrase - needs fixing
+function pushErrorRateToKbErrs() {
+    let currKbUnCorrErrs = [];
+    let currKbCorrErrs = [];
+
+    //Iterate through currKbErrs and sort the values into the corresponding arrays
+    for (i = 0; i < currKbErrs.length; i++) {
+        for (j = 0; j < currKbErrs[i].length; j++) {
+            if (j % 2 != 0) {
+                currKbCorrErrs.push(currKbErrs[i][j]);
+            } else if (j % 2 === 0) {
+                currKbUnCorrErrs.push(currKbErrs[i][j]);
+            }
+        }
+
+    }
+
+    //Get average uncorrected error rate
+    let avgUnCorrErrs = Math.round(currKbUnCorrErrs.reduce((accumulator, currentValue) =>
+        accumulator + currentValue, 0) / currKbUnCorrErrs.length);
+
+    //Get average corrected error rate
+    let avgCorrErrs = Math.round(currKbCorrErrs.reduce((accumulator, currentValue) =>
+        accumulator + currentValue, 0) / currKbCorrErrs.length);
+
+    //Put values of arrays into array for currently used keyboard as objects
+    switch (kbCount) {
+        case (1):
+            kb1SeshErrs.push({ unCorrErrRate: avgUnCorrErrs });
+            kb1SeshErrs.push({ corrErrRate: avgCorrErrs })
+            console.log(kb1SeshErrs);
+            break;
+
+        case (2):
+            kb2SeshErrs.push({ unCorrErrRate: avgUnCorrErrs });
+            kb2SeshErrs.push({ corrErrRate: avgCorrErrs });
+            break;
+
+        default:
+            break;
+    }
+
+    currKbErrs = [];
+
+}
+
+//For adaptive keyboard
+function checkForError() {
+    //Something something check last value in input box against equivalent value in phrase box if it's not the same mark it as an error otherwise just continue
+    if (keyboardInput.value[cursorPos - 2] !== phraseBox.textContent[cursorPos - 2]) {
+        console.log('skill issue');
+        let lastErrTouches = [];
+        lastErrTouches.push(`Key pressed: ${keyboardInput.value.slice(cursorPos - 2, cursorPos)}`, `Expected key: ${phraseBox.textContent[cursorPos - 2]}`, `x = ${touchX}`, `y = ${touchY}`);
+        errTouches.push(lastErrTouches);
+    };
+}
+
+function tallyKeyPress() {
+
+}
+
+//Put times into the wordTimes array so that the average WPM can be calculated later
+function WPMTimeList() {
+    wordTimes.push(Date.now());
+}
+
+//CaLculate average WPM based on times in the wordTimes array
+function getWPM() {
+    for (i = 0; i < wordTimes.length; i++) {
+        WPMList.push((wordTimes[i + 1] - wordTimes[i]) / 1000);
+    }
+    WPMList.pop();
+    let avgWordTime = WPMList.reduce((accumulator, currentValue) =>
+        accumulator + currentValue, 0) / WPMList.length;
+    WPM = 60 / avgWordTime;
+    kb1SeshWPM.push(WPM);
+    //console.log(kb1SeshWPM);
+    wordTimes = [];
+}
+
 function phraseTyped() {
     getUnCorrErrsForLastPhrase();
     getCorrErrsForLastPhrase();
-    pushPhraseErrsToSeshErrs();
-    phraseCount ++;
+    pushPhraseErrsToKbErrs();
+    phraseCount++;
     if (phraseCount === 3) {
         newSession();
         phraseCount = 0;
     }
-    phraseCounter.textContent = `Phrases typed: ${phraseCount}/3`;
+    updateDisplays();
     keyboardInput.value = '';
     wordTimes = [];
     newPhrase();
@@ -401,22 +459,50 @@ function phraseTyped() {
 
 /*Generate a new phrase when the user has finished typing the current one, refer to design doc*/
 function newPhrase() {
-    phraseBox.textContent = 'New phrase';
     let phraseNum = Math.round(Math.random() * (phraseArrLen - 1));
     phraseBox.textContent = phrases[phraseNum];
 }
 
 function newSession() {
     getWPM();
-    getLastSeshErrorRate();
-    seshCount ++;
-    kbSeshCount.textContent = `Keyboard ${kbCount} - Session ${seshCount}/3`;
+
+    seshCount++;
     if (seshCount > 3) {
-        updateKbCount();
+        newKb();
         seshCount = 1;
     }
-    document.querySelector('title').textContent = `Experiment ${kbCount} - 899549 Research Tool`;
+
+    updateDisplays();
+
     wordTimes = [];
+}
+
+function newKb() {
+    pushErrorRateToKbErrs();
+    kbCount++;
+    updateDisplays();
+    if (kbCount > 2) {
+        dispCompScreen();
+    }
+    switch (kbNum) {
+        case (0): experimentSession();
+            break;
+        case (1): TestKb();
+            break;
+        case (2): 
+            ControlKb();
+            keyboardArea.removeEventListener("touchend", checkForError);
+            keyboardArea.removeEventListener("touchend", tallyKeyPress);
+            break;
+        default: break;
+    }
+}
+
+//Update the session and keyboard count displays
+function updateDisplays() {
+    phraseCounter.textContent = `Phrases typed: ${phraseCount}/3`;
+    kbSeshCount.textContent = `Keyboard ${kbCount} - Session ${seshCount}/3`;
+    document.querySelector('title').textContent = `Experiment ${kbCount} - 899549 Research Tool`;
 }
 
 function dispCompScreen() {
