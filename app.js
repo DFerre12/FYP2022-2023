@@ -231,10 +231,11 @@ function TestKb() {
     adaptKeyX = keyX;
     adaptKeyY = keyY;
     testKeyboard = `Keyboard ${kbCount} = Test`;
-    keyboardArea.addEventListener("touchend", checkForError);
+    //keyboardArea.addEventListener("touchend", checkForError);
     keyboardArea.addEventListener("touchend", tallyKeyPress);
 }
 
+//Remove key borders when data gathering session starts
 function rmKeyBorders() {
     for (row = 0; row < rowList.length; row++) {
         for (el = 0; el < rowList[row].length; el++) {
@@ -440,6 +441,11 @@ function checkForError() {
 }
 
 function tallyKeyPress() {
+
+}
+
+//When user has typed a phrase, adapt the keys based on the data gathered from the last phrase
+function adaptKb() {
 
 }
 
