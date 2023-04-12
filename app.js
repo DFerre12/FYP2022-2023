@@ -193,13 +193,23 @@ function generateKeyCoords() {
     keyY.push(yCoord);
 }
 
+//Create objects to store coordinates and number of keypresses for each key
 class keyObject {
-    constructor(xCoords, yCoords) {
-        this.xCoords = keyX[xCoords], this.yCoords = keyY[yCoords], this.KPTally = 0;
+    constructor(key) {
+        this.key = key, this.KPTally = 0;
     }
 }
 
-a = new keyObject(1, 1);
+let keyList = [];
+
+function createKeyObjects() {
+    for (let rows = 0; rows < rowList.length; rows++) {
+        let currentRow = rowList[rows];
+        for (let j = 0; j < currentRow.length; j++) {
+            keyList.push(key = new keyObject(currentRow[j].textContent.toLowerCase()));
+            }  
+        }
+    }
 
 function experimentSession() {
     randomKb();
@@ -230,6 +240,7 @@ function TestKb() {
     console.log('Using test keyboard');
     adaptKeyX = keyX;
     adaptKeyY = keyY;
+    createKeyObjects();
     testKeyboard = `Keyboard ${kbCount} = Test`;
     keyboardArea.addEventListener("touchend", checkForError);
     keyboardArea.addEventListener("touchend", tallyKeyPress);
@@ -440,7 +451,13 @@ function checkForError() {
 }
 
 function tallyKeyPress() {
-
+    let lastPressedKey = keyboardInput.value[cursorPos - 2];
+    console.log(lastPressedKey);
+    for (i = 0; i < keyList.length; i++) {
+        if (lastPressedKey === keyList[i].key){
+            keyList[i].KPTally++;
+        }
+    }
 }
 
 //Put times into the wordTimes array so that the average WPM can be calculated later
