@@ -194,19 +194,24 @@ function generateKeyCoords() {
 
 //Create objects to store coordinates and number of keypresses for each key
 class keyObject {
-    constructor(key) {
-        this.key = key, this.KPTally = 0;
+    constructor(key, xInd, yInd) {
+        this.key = key, this.keyXIndex = xInd, this.keyYIndex = yInd, this.KPTally = 0;
     }
 }
 
 function createKeyObjects() {
+    let xInd = 0;
+    let yInd = 0;
     for (let rows = 0; rows < rowList.length; rows++) {
         let currentRow = rowList[rows];
         for (let j = 0; j < currentRow.length; j++) {
-            keyList.push(key = new keyObject(currentRow[j].textContent.toLowerCase()));
-            }  
+            keyList.push(key = new keyObject(currentRow[j].textContent.toLowerCase(), xInd, yInd));
+            xInd++;
         }
+        xInd++;
+        yInd++;
     }
+}
 
 function experimentSession() {
     randomKb();
@@ -240,7 +245,7 @@ function TestKb() {
     createKeyObjects();
     testKeyboard = `Keyboard ${kbCount} = Test`;
     keyboardArea.addEventListener("touchend", checkForError);
-    keyboardArea.addEventListener("touchend", tallyKeyPress);
+    keyboardArea.addEventListener("touchend", checkKeyForTally);
 }
 
 function rmKeyBorders() {
@@ -249,11 +254,11 @@ function rmKeyBorders() {
             rowList[row][el].style.border = 'none';
         }
     }
-    
+
 }
 
 function handleKeyPress() {
-    switch(kbNum) {
+    switch (kbNum) {
         case (0):
             keyPressed(keyX, keyY);
             break;
@@ -447,22 +452,35 @@ function checkForError() {
     };
 }
 
+function checkKeyForTally() {
+    //Make sure that it doen't count keystrokes again when the user presses backspace
+    if (touchX > adaptKeyX[28] && touchX < adaptKeyX[29]) {
+        if (touchY >= adaptKeyY[2] && touchY < adaptKeyY[3]) {
+            return;
+        } else {
+            tallyKeyPress();
+        }
+    } else {
+        tallyKeyPress();
+    }
+}
+
 //When the user presses a key, increment its KPTally value by 1
 function tallyKeyPress() {
     let lastPressedKey = keyboardInput.value[cursorPos - 2];
-    console.log(lastPressedKey);
-    //Make sure that it doen't count keystrokes again when the user presses backspace
-    if (touchY >= adaptKeyY[2] && touchY < adaptKeyY[3]) {
-        if (touchX > adaptKeyX[28] && touchX < adaptKeyX[29]) {
-            return;
-        }
-    } else {
-        for (i = 0; i < keyList.length; i++) {
-        if (lastPressedKey === keyList[i].key){
+
+    for (i = 0; i < keyList.length; i++) {
+        if (lastPressedKey === keyList[i].key) {
+            keyList[i].KPTally++;
+        } else if (lastPressedKey === ' ' && keyList[i].key === 'space') {
             keyList[i].KPTally++;
         }
     }
-    }
+}
+
+//When user has typed a phrase with the test keyboard, adapt the keys
+function adaptKb() {
+
 }
 
 //Put times into the wordTimes array so that the average WPM can be calculated later
@@ -531,7 +549,7 @@ function newKb() {
             break;
         case (1): TestKb();
             break;
-        case (2): 
+        case (2):
             ControlKb();
             keyboardArea.removeEventListener("touchend", checkForError);
             keyboardArea.removeEventListener("touchend", tallyKeyPress);
