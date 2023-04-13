@@ -96,9 +96,8 @@ let keyY = [];
 let adaptKeyX;
 let adaptKeyY;
 
-//Key coordinates for currently used keyboard
-let currKeyX;
-let currKeyY;
+//Store number of keystrokes made with each key
+let keyList = [];
 
 //Store coordinates of most recent touch event
 let touchX;
@@ -199,8 +198,6 @@ class keyObject {
         this.key = key, this.KPTally = 0;
     }
 }
-
-let keyList = [];
 
 function createKeyObjects() {
     for (let rows = 0; rows < rowList.length; rows++) {
@@ -450,13 +447,21 @@ function checkForError() {
     };
 }
 
+//When the user presses a key, increment its KPTally value by 1
 function tallyKeyPress() {
     let lastPressedKey = keyboardInput.value[cursorPos - 2];
     console.log(lastPressedKey);
-    for (i = 0; i < keyList.length; i++) {
+    //Make sure that it doen't count keystrokes again when the user presses backspace
+    if (touchY >= adaptKeyY[2] && touchY < adaptKeyY[3]) {
+        if (touchX > adaptKeyX[28] && touchX < adaptKeyX[29]) {
+            return;
+        }
+    } else {
+        for (i = 0; i < keyList.length; i++) {
         if (lastPressedKey === keyList[i].key){
             keyList[i].KPTally++;
         }
+    }
     }
 }
 
