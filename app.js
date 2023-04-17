@@ -195,7 +195,7 @@ function generateKeyCoords() {
 //Create objects to store coordinates and number of keypresses for each key
 class keyObject {
     constructor(key, xInd, yInd) {
-        this.key = key, this.keyXIndex = xInd, this.keyYIndex = yInd, this.KPTally = 0;
+        this.key = key, this.keyXIndex = xInd, this.keyYIndex = yInd, this.KPTally = 0, this.resizeThresh = 0;
     }
 }
 
@@ -480,7 +480,19 @@ function tallyKeyPress() {
 
 //When user has typed a phrase with the test keyboard, adapt the keys
 function adaptKb() {
+    console.log('Pretend it adapted leKeyboard');
+    for (i = 0; i < keyList.length; i++) {
+        resizeKey(keyList[i].keyXIndex, keyList[i].keyYIndex, keyList[i].KPTally);
+    }
+}
 
+function resizeKey(xIndex, yIndex, tally) {
+    resizeThresh = tally;
+    if (!(adaptKeyX[xIndex] === keyX[xIndex] + (keyX[xIndex]*0.2))) {
+        console.log(xIndex);
+    }
+    adaptKeyX[xIndex] -= tally*5;
+    adaptKeyX[xIndex+1] += tally*5;
 }
 
 //Put times into the wordTimes array so that the average WPM can be calculated later
