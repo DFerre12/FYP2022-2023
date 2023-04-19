@@ -195,7 +195,17 @@ function generateKeyCoords() {
 //Create objects to store coordinates and number of keypresses for each key
 class keyObject {
     constructor(key, xInd, yInd) {
-        this.key = key, this.keyXIndex = xInd, this.keyYIndex = yInd, this.KPTally = 0, this.resizeThresh = 0;
+        this.key = key, this.keyXIndex = xInd, this.keyYIndex = yInd, 
+        this.KPTally = 0, this.resizeThresh = 0;
+    }
+}
+
+//Store details of error when user makes one using the test keyboard so that it can adapt in the next adaptation cycle
+class errTouchEvnt {
+    constructor(errKeyX, errKeyY, expKeyX, expKeyY, xCoords, yCoords) {
+        this.erroneousKeyX = errKeyX,this.erroneousKeyY = errKeyY, 
+        this.expectedKeyX = expKeyX, this.expectedKeyY = expKeyY, 
+        this.x = xCoords, this.y = yCoords;
     }
 }
 
@@ -205,7 +215,15 @@ function createKeyObjects() {
     for (let rows = 0; rows < rowList.length; rows++) {
         let currentRow = rowList[rows];
         for (let j = 0; j < currentRow.length; j++) {
-            keyList.push(key = new keyObject(currentRow[j].textContent.toLowerCase(), xInd, yInd));
+            switch(currentRow[j].textContent) {
+                case ('space'):
+                    keyList.push(key = new keyObject(' ', xInd, yInd));
+                    break;
+                default:
+                    keyList.push(key = new keyObject(currentRow[j].textContent.toLowerCase(), xInd, yInd));
+                    break;
+            }
+            
             xInd++;
         }
         xInd++;
@@ -443,13 +461,40 @@ function pushErrorRateToKbErrs() {
 
 //For adaptive keyboard
 function checkForError() {
+    let errKeyXIndex;
+    let expKeyXIndex;
+    let errKeyYIndex;
+    let expKeyYIndex;
     //Something something check last value in input box against equivalent value in phrase box if it's not the same mark it as an error otherwise just continue
     if (keyboardInput.value[cursorPos - 2] !== phraseBox.textContent[cursorPos - 2]) {
         console.log('skill issue');
-        let lastErrTouches = [];
-        lastErrTouches.push(`Key pressed: ${keyboardInput.value.slice(cursorPos - 2, cursorPos)}`, `Expected key: ${phraseBox.textContent[cursorPos - 2]}`, `x = ${touchX}`, `y = ${touchY}`);
-        errTouches.push(lastErrTouches);
-    };
+
+
+        for (j = 0; j < keyList.length; j++) {
+            if (keyList[j].key === keyboardInput.value[cursorPos - 2]) {
+                errKeyXIndex = keyList[j].keyXIndex;
+                errKeyYIndex = keyList[j].keyYIndex;
+            }
+            if (keyList[j].key === phraseBox.textContent[cursorPos - 2]) {
+                expKeyXIndex = keyList[j].keyXIndex;
+                expKeyYIndex = keyList[j].keyYIndex;
+            }
+        }
+    }
+
+    if (touchX > adaptKeyX[28] && touchX < adaptKeyX[29]) {
+        if (touchY >= adaptKeyY[2] && touchY < adaptKeyY[3]) {
+            return;
+        } else {
+            errTouches.push(error = new errTouchEvnt(errKeyXIndex, errKeyYIndex,
+                expKeyXIndex, expKeyYIndex,
+                touchX, touchY));
+        }
+    } else {
+        errTouches.push(error = new errTouchEvnt(errKeyXIndex, errKeyYIndex,
+            expKeyXIndex, expKeyYIndex,
+            touchX, touchY));
+    }
 }
 
 function checkKeyForTally() {
@@ -481,19 +526,51 @@ function tallyKeyPress() {
 //When user has typed a phrase with the test keyboard, adapt the keys
 function adaptKb() {
     console.log('Pretend it adapted leKeyboard');
+
+    //adapt keys based on errors
+    for (i = 0; i < errTouches.length; i++) {
+        if (errTouches[i].expectedKeyX - errTouches[i].erroneousKeyX === 1 || errTouches[i].erroneousKeyX - errTouches[i].expectedKeyX === 1) {
+            console.log(errTouches[i].x);
+            resizeKey(errTouches[i].erroneousKeyX, errTouches[i].expectedKeyX, 
+                null, null, null, 
+                errTouches[i].x, null);
+        } else if (errTouches[i].expectedKeyY - errTouches[i].erroneousKeyY === 1 || errTouches[i].erroneousKeyY - errTouches[i].expectedKeyY === 1) {
+            console.log(errTouches[i].y);
+            resizeKey(null, null, 
+                errTouches[i].erroneousKeyY, errTouches[i].expectedKeyY, 
+                null, errTouches[i].y);
+        }
+    }
+
+    //adapt keys based on heat map
     for (i = 0; i < keyList.length; i++) {
-        resizeKey(keyList[i].keyXIndex, keyList[i].keyYIndex, keyList[i].KPTally);
+
     }
 }
 
-function resizeKey(xIndex, yIndex, tally) {
-    resizeThresh = tally;
-    if (!(adaptKeyX[xIndex] === keyX[xIndex] + (keyX[xIndex]*0.2))) {
-        console.log(xIndex);
+function resizeKey(errXIndex, expXIndex, errYIndex, expYIndex, xTouch, yTouch) {
+    if (errXIndex < expXIndex) {
+        console.log('reduce value of left coordinate');
+        //Change later because it'll adapt too much
+        adaptKeyX[expXIndex] = xTouch;
+    } else if (errXIndex > expXIndex) {
+        console.log('increase value of right coordinate');
+        adaptKeyX[expXIndex + 1] = xTouch;
     }
-    adaptKeyX[xIndex] -= tally*5;
-    adaptKeyX[xIndex+1] += tally*5;
+
+    if (errYIndex < expYIndex) {
+        console.log('reduce value of upper coordinate');
+        //Change later because it'll adapt too much
+        adaptKeyY[expYIndex] = yTouch;
+    } else if (errYIndex > expYIndex) {
+        console.log('increase value of lower coordinate');
+        adaptKeyY[expYIndex + 1] = yTouch;
+    }
 }
+
+/*function resizeFromHeatMap() {
+
+}*/
 
 //Put times into the wordTimes array so that the average WPM can be calculated later
 function WPMTimeList() {
@@ -529,10 +606,14 @@ function phraseTyped() {
     newPhrase();
 }
 
-/*Generate a new phrase when the user has finished typing the current one, refer to design doc*/
+//Generate a new phrase when the user has finished typing the current one
 function newPhrase() {
     let phraseNum = Math.round(Math.random() * (phraseArrLen - 1));
     phraseBox.textContent = phrases[phraseNum];
+    //If user is using the adaptive keyboard, call the adaptKb function when the user has typed a phrase
+    if (kbNum === 2) {
+        adaptKb();
+    }
 }
 
 function newSession() {
@@ -557,9 +638,11 @@ function newKb() {
         dispCompScreen();
     }
     switch (kbNum) {
-        case (0): experimentSession();
+        case (0):
+            experimentSession();
             break;
-        case (1): TestKb();
+        case (1):
+            TestKb();
             break;
         case (2):
             ControlKb();
