@@ -80,6 +80,7 @@ let botRow = document.getElementsByClassName('spaceKey');
 let botRowBounds = document.querySelector('.bottomRow').getBoundingClientRect();
 let rowList = [topRow, secRow, thiRow, botRow];
 let rowBoundList = [topRowBounds, secRowBounds, thiRowBounds, botRowBounds];
+let keySizeList = [];
 
 //Phrases for the user to type
 let phrases = ['nymphs blitz quick vex dwarf jog', 'big fjords vex quick waltz nymph', 'junk mtv quiz graced by fox whelps',
@@ -196,7 +197,7 @@ function generateKeyCoords() {
 class keyObject {
     constructor(key, xInd, yInd) {
         this.key = key, this.keyXIndex = xInd, this.keyYIndex = yInd, 
-        this.KPTally = 0, this.resizeThresh = 0;
+        this.KPTally = 0;
     }
 }
 
@@ -251,6 +252,7 @@ function randomKb() {
     if (kbNum === 1) { ControlKb() }
     else if (kbNum === 2) { TestKb() };
 }
+
 function ControlKb() {
     console.log('Using control keyboard');
     controlKeyboard = `Keyboard ${kbCount} = Control`;
@@ -258,9 +260,10 @@ function ControlKb() {
 
 function TestKb() {
     console.log('Using test keyboard');
-    adaptKeyX = keyX;
-    adaptKeyY = keyY;
+    adaptKeyX = [...keyX];
+    adaptKeyY = [...keyY];
     createKeyObjects();
+    getKeyWidth();
     testKeyboard = `Keyboard ${kbCount} = Test`;
     keyboardArea.addEventListener("touchend", checkForError);
     keyboardArea.addEventListener("touchend", checkKeyForTally);
@@ -272,7 +275,6 @@ function rmKeyBorders() {
             rowList[row][el].style.border = 'none';
         }
     }
-
 }
 
 function handleKeyPress() {
@@ -379,7 +381,6 @@ function updateCursorPos() {
     cursorPos = keyboardInput.value.length + 1;
 }
 
-
 //When user has typed a phrase, check for uncorrected errors
 function getUnCorrErrsForLastPhrase() {
     let errorCount = 0;
@@ -460,6 +461,14 @@ function pushErrorRateToKbErrs() {
 }
 
 //For adaptive keyboard
+//Gets the initial width of the keys for each row before they have been adapted
+//to make sure that they don't exceed the resize threshold
+function getKeyWidth() {
+    for (i = 0; i < rowBoundList.length; i++){
+        keySizeList.push(rowBoundList[i].width / rowList[i].length);
+    }
+}
+
 function checkForError() {
     let errKeyXIndex;
     let expKeyXIndex;
@@ -525,20 +534,18 @@ function tallyKeyPress() {
 
 //When user has typed a phrase with the test keyboard, adapt the keys
 function adaptKb() {
-    console.log('Pretend it adapted leKeyboard');
-
-    //adapt keys based on errors
+    //Loop through the error list and ignore errors where the user has pressed keys more than
+    //one key apart from the expected key
     for (i = 0; i < errTouches.length; i++) {
         if (errTouches[i].expectedKeyX - errTouches[i].erroneousKeyX === 1 || errTouches[i].erroneousKeyX - errTouches[i].expectedKeyX === 1) {
-            console.log(errTouches[i].x);
-            resizeKey(errTouches[i].erroneousKeyX, errTouches[i].expectedKeyX, 
-                null, null, null, 
-                errTouches[i].x, null);
+            checkKeyForResize(errTouches[i].erroneousKeyX, errTouches[i].expectedKeyX, 
+                errTouches[i].erroneousKeyY, errTouches[i].expectedKeyY, 
+                errTouches[i].x, errTouches[i].y);
         } else if (errTouches[i].expectedKeyY - errTouches[i].erroneousKeyY === 1 || errTouches[i].erroneousKeyY - errTouches[i].expectedKeyY === 1) {
             console.log(errTouches[i].y);
-            resizeKey(null, null, 
+            checkKeyForResize(errTouches[i].erroneousKeyX, errTouches[i].expectedKeyX, 
                 errTouches[i].erroneousKeyY, errTouches[i].expectedKeyY, 
-                null, errTouches[i].y);
+                errTouches[i].x, errTouches[i].y);
         }
     }
 
@@ -548,29 +555,76 @@ function adaptKb() {
     }
 }
 
-function resizeKey(errXIndex, expXIndex, errYIndex, expYIndex, xTouch, yTouch) {
+//Make sure that the key edge will only move up to 1.25x (Just another ugly function)
+function checkKeyForResize(errXIndex, expXIndex, errYIndex, expYIndex, xTouch, yTouch) {
+    let distXFromExpKey = xTouch - adaptKeyX[expXIndex];
+    //Key edge is not allowed to move right by more than this value
+    let keyWidthMaxRight = keySizeList[expYIndex] * 1.25;
+    //Key edge is not allowed to move left by more than this value
+    let keyWidthMaxLeft = keySizeList[expYIndex] * 0.25;
+
+    let distYFromExpKey = yTouch - adaptKeyY[expYIndex];
+    let keyHeightMaxTop = rowBoundList[expYIndex].height * 1.15;
+    let keyHeightMaxBottom = rowBoundList[expYIndex].height * 0.15;
+
+    //Check if the distance between the user's touchpoint is greater than the max allowed distance
+    //if it is, limit the growth to 1.25x
+    //x axis
+    if (distXFromExpKey > keyWidthMaxRight) {
+        //If the new size exceeds 1.25x, limit it to 1.25x
+        xTouch = adaptKeyX[expXIndex] + keyWidthMaxRight;
+    } else if (distXFromExpKey < keyWidthMaxLeft) {
+        //If the new size exceeds 0.25x, limit it to 0.25x
+        xTouch = adaptKeyX[expXIndex] - keyWidthMaxLeft;
+    }
+
+    //y axis
+    if (distYFromExpKey > keyHeightMaxTop) {
+        //If the new size exceeds 1.25x, limit it to 1.25x
+        yTouch = adaptKeyY[expYIndex] + keyHeightMaxTop;
+    } else if (distYFromExpKey < keyHeightMaxBottom) {
+        //If the new size exceeds 0.25x, limit it to 0.25x
+        yTouch = adaptKeyY[expYIndex] - keyHeightMaxBottom;
+    }
+
+    //if (xTouch - adaptKeyX[expXIndex] > adaptKeyX[expXIndex - 1] + keyWidthMaxRight)
+    resizeKey(errXIndex, expXIndex, errYIndex, expYIndex, xTouch, yTouch);
+}
+
+function resizeKey(errXIndex, expXIndex, errYIndex, expYIndex, newXCoord, newYCoord, resizeThresh) {
+    //Check which side the erroneous key is on so that the right coordinates are changed
     if (errXIndex < expXIndex) {
-        console.log('reduce value of left coordinate');
-        //Change later because it'll adapt too much
-        adaptKeyX[expXIndex] = xTouch;
+        //reduce value of left coordinate
+        adaptKeyX[expXIndex] = newXCoord;
     } else if (errXIndex > expXIndex) {
-        console.log('increase value of right coordinate');
-        adaptKeyX[expXIndex + 1] = xTouch;
+        //increase value of right coordinate
+        adaptKeyX[errXIndex] = newXCoord;
     }
 
     if (errYIndex < expYIndex) {
-        console.log('reduce value of upper coordinate');
-        //Change later because it'll adapt too much
-        adaptKeyY[expYIndex] = yTouch;
+        //reduce value of upper coordinate
+        adaptKeyY[expYIndex] = newYCoord;
     } else if (errYIndex > expYIndex) {
-        console.log('increase value of lower coordinate');
-        adaptKeyY[expYIndex + 1] = yTouch;
+        //increase value of lower coordinate
+        adaptKeyY[errYIndex] = newYCoord;
+    }
+    //remove in final version
+    clearErrors();
+}
+
+//Go through the adaptKeyX/Y arrays and make sure that the keys are sensible sizes
+//Also adapt keys based on the number of times they've been pressed
+function resizeFromHeatMap() {
+    let keyResizeWeights = [];
+    for (i = 0; i < keyList.length; i++) {
+        keyResizeWeights.push([keyList[i].keyXIndex, keyList[i].keyYIndex, 
+            keyList[i].KPTally]);
     }
 }
 
-/*function resizeFromHeatMap() {
-
-}*/
+function clearErrors() {
+    errTouches = [];
+}
 
 //Put times into the wordTimes array so that the average WPM can be calculated later
 function WPMTimeList() {
@@ -613,6 +667,7 @@ function newPhrase() {
     //If user is using the adaptive keyboard, call the adaptKb function when the user has typed a phrase
     if (kbNum === 2) {
         adaptKb();
+        clearErrors();
     }
 }
 
