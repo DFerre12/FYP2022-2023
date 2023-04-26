@@ -4,8 +4,15 @@ body {
 }
 
 .wrapper {
+    position: relative;
     margin: 1.5rem;
-    
+}
+
+iframe {
+    position: absolute;
+    overflow: hidden;
+    left: 0;
+    width: 100%;
 }
 
 form {

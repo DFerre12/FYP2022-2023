@@ -1,11 +1,13 @@
 /*PIS page code*/
 const checkPIS = document.querySelector('#readPIS');
 const PISnext = document.querySelector('#PISnext');
-
+let readPIS;
 /*Don't allow user to press 'next' button unless they have checked the box*/
 /*Check that checkPIS isn't null, otherwise other pages will fail to work*/
 if (checkPIS != null) {
     checkPIS.addEventListener('change', (e) => {
+        const readPISValue = checkPIS.value;
+        sessionStorage.setItem("Read PIS", readPISValue);
         PISnext.disabled = !e.target.checked;
     }, false);
 }
@@ -34,9 +36,14 @@ function checkBoxChanged() {
     updateCheckCount();
 }
 
-/*Make this actually set sessionStorage based on the values of the checkboxes later*/
+/*set sessionStorage based on the values of the checkboxes*/
 function updateClauses() {
     console.log('pretend it\'s updated');
+    for (const clause of clauses) {
+        if (clause.checked) {
+            sessionStorage.setItem(clause.name, clause.value);
+        }
+    }
 }
 
 /*Only let the user press next when they have accpted all of the clauses*/
@@ -71,15 +78,15 @@ const keyboardInput = document.getElementById('keyboardInput');
 
 //Keyboard row divs
 let topRow = document.getElementsByClassName('topKeys');
-let topRowBounds = document.querySelector('.topRow').getBoundingClientRect();
+let topRowBounds;
 let secRow = document.getElementsByClassName('secKeys');
-let secRowBounds = document.querySelector('.secondRow').getBoundingClientRect();
+let secRowBounds;
 let thiRow = document.getElementsByClassName('thiKeys');
-let thiRowBounds = document.querySelector('.thirdRow').getBoundingClientRect();
+let thiRowBounds;
 let botRow = document.getElementsByClassName('spaceKey');
-let botRowBounds = document.querySelector('.bottomRow').getBoundingClientRect();
-let rowList = [topRow, secRow, thiRow, botRow];
-let rowBoundList = [topRowBounds, secRowBounds, thiRowBounds, botRowBounds];
+let botRowBounds;
+let rowList;
+let rowBoundList;
 let keySizeList = [];
 
 //Phrases for the user to type
@@ -108,7 +115,7 @@ let touchY;
 //Keyboard mode: 0=Practice, 1=Control, 2=Test
 let kbNum = 0;
 //Current keyboard 0=Practice, 1=First keyboard, 2=Second keyboard
-let kbCount = '0';
+let kbCount = 0;
 //Current session
 let seshCount = '0';
 //Amount of phrases typed in current session
@@ -127,10 +134,12 @@ let totKs = 0;
 let lastPhrErrs = [];
 //Error rates for current keyboard
 let currKbErrs = [];
-//Error rate for each session on the first keyboard
-let kb1SeshErrs = [];
-//Error rate for each session on the second keyboard
-let kb2SeshErrs = [];
+//Error rates for each session on the first keyboard
+let kb1unCorrSeshErrs = [];
+let kb1CorrSeshErrs = [];
+//Error rates for each session on the second keyboard
+let kb2unCorrSeshErrs = [];
+let kb2CorrSeshErrs = [];
 
 //Typing speed storage
 //List of times taken in seconds to type 5 characters - public scope so that the backspace key can remove the last value
@@ -142,17 +151,23 @@ let kb1SeshWPM = [];
 //Average WPM for each session for second keyboard
 let kb2SeshWPM = [];
 
-
 //Generate keyboard and start practice session when experiment page loads
 if (window.location.pathname.includes('experiment.html')) {
-    //newSession();
-    generateKeyCoords();
     initKb();
-    updateDisplays();
+    generateKeyCoords();
     newPhrase();
+    updateDisplays();
+    alert("If the keys fail to register correctly on initial load, please refresh the page");
 }
 
 function initKb() {
+    topRowBounds = document.querySelector('.topRow').getBoundingClientRect();
+    secRowBounds = document.querySelector('.secondRow').getBoundingClientRect();
+    thiRowBounds = document.querySelector('.thirdRow').getBoundingClientRect();
+    botRowBounds = document.querySelector('.bottomRow').getBoundingClientRect();
+    rowBoundList = [topRowBounds, secRowBounds, thiRowBounds, botRowBounds];
+    rowList = [topRow, secRow, thiRow, botRow];
+
     keyboardArea.addEventListener("touchstart", (e) => {
         touchX = e.touches[0].clientX;
         touchY = e.touches[0].clientY - kbArea.top;
@@ -196,17 +211,17 @@ function generateKeyCoords() {
 //Create objects to store coordinates and number of keypresses for each key
 class keyObject {
     constructor(key, xInd, yInd) {
-        this.key = key, this.keyXIndex = xInd, this.keyYIndex = yInd, 
-        this.KPTally = 0;
+        this.key = key, this.keyXIndex = xInd, this.keyYIndex = yInd,
+            this.KPTally = 0;
     }
 }
 
 //Store details of error when user makes one using the test keyboard so that it can adapt in the next adaptation cycle
 class errTouchEvnt {
     constructor(errKeyX, errKeyY, expKeyX, expKeyY, xCoords, yCoords) {
-        this.erroneousKeyX = errKeyX,this.erroneousKeyY = errKeyY, 
-        this.expectedKeyX = expKeyX, this.expectedKeyY = expKeyY, 
-        this.x = xCoords, this.y = yCoords;
+        this.erroneousKeyX = errKeyX, this.erroneousKeyY = errKeyY,
+            this.expectedKeyX = expKeyX, this.expectedKeyY = expKeyY,
+            this.x = xCoords, this.y = yCoords;
     }
 }
 
@@ -216,7 +231,7 @@ function createKeyObjects() {
     for (let rows = 0; rows < rowList.length; rows++) {
         let currentRow = rowList[rows];
         for (let j = 0; j < currentRow.length; j++) {
-            switch(currentRow[j].textContent) {
+            switch (currentRow[j].textContent) {
                 case ('space'):
                     keyList.push(key = new keyObject(' ', xInd, yInd));
                     break;
@@ -224,7 +239,7 @@ function createKeyObjects() {
                     keyList.push(key = new keyObject(currentRow[j].textContent.toLowerCase(), xInd, yInd));
                     break;
             }
-            
+
             xInd++;
         }
         xInd++;
@@ -241,7 +256,6 @@ function experimentSession() {
         if ((keyboardInput.value.length % 5) === 0) {
             WPMTimeList();
         }
-        checkLastKey();
     });
 }
 
@@ -255,7 +269,7 @@ function randomKb() {
 
 function ControlKb() {
     console.log('Using control keyboard');
-    controlKeyboard = `Keyboard ${kbCount} = Control`;
+    controlKeyboard = `Keyboard ${kbCount.toString()} = Control`;
 }
 
 function TestKb() {
@@ -264,7 +278,7 @@ function TestKb() {
     adaptKeyY = [...keyY];
     createKeyObjects();
     getKeyWidth();
-    testKeyboard = `Keyboard ${kbCount} = Test`;
+    testKeyboard = `Keyboard ${kbCount.toString()} = Test`;
     keyboardArea.addEventListener("touchend", checkForError);
     keyboardArea.addEventListener("touchend", checkKeyForTally);
 }
@@ -381,90 +395,11 @@ function updateCursorPos() {
     cursorPos = keyboardInput.value.length + 1;
 }
 
-//When user has typed a phrase, check for uncorrected errors
-function getUnCorrErrsForLastPhrase() {
-    let errorCount = 0;
-    //Iterate through the input box and check the values against the phrase - tally errors when found
-    for (i = 0; i < keyboardInput.value.length; i++) {
-        if (keyboardInput.value[i] != phraseBox.textContent[i]) {
-            errorCount++;
-        }
-    }
-
-    //Get error rate percentage and push into lastPhrErrs
-    errPcnt = Math.round((errorCount / phraseBox.textContent.length) * 100);
-    lastPhrErrs.push(errPcnt);
-}
-
-function getCorrErrsForLastPhrase() {
-    errPcnt = Math.round((errKs / phraseBox.textContent.length) * 100);
-    lastPhrErrs.push(errPcnt);
-    totKs = 0;
-    errKs = 0;
-}
-
-function checkLastKey() {
-    if (keyboardInput.value[cursorPos - 2] != phraseBox.textContent[cursorPos - 2]) {
-        errKs++;
-    }
-}
-
-function pushPhraseErrsToKbErrs() {
-    currKbErrs.push(lastPhrErrs);
-    lastPhrErrs = [];
-}
-
-//Call when user has typed a phrase - needs fixing
-function pushErrorRateToKbErrs() {
-    let currKbUnCorrErrs = [];
-    let currKbCorrErrs = [];
-
-    //Iterate through currKbErrs and sort the values into the corresponding arrays
-    for (i = 0; i < currKbErrs.length; i++) {
-        for (j = 0; j < currKbErrs[i].length; j++) {
-            if (j % 2 != 0) {
-                currKbCorrErrs.push(currKbErrs[i][j]);
-            } else if (j % 2 === 0) {
-                currKbUnCorrErrs.push(currKbErrs[i][j]);
-            }
-        }
-
-    }
-
-    //Get average uncorrected error rate
-    let avgUnCorrErrs = Math.round(currKbUnCorrErrs.reduce((accumulator, currentValue) =>
-        accumulator + currentValue, 0) / currKbUnCorrErrs.length);
-
-    //Get average corrected error rate
-    let avgCorrErrs = Math.round(currKbCorrErrs.reduce((accumulator, currentValue) =>
-        accumulator + currentValue, 0) / currKbCorrErrs.length);
-
-    //Put values of arrays into array for currently used keyboard as objects
-    switch (kbCount) {
-        case (1):
-            kb1SeshErrs.push({ unCorrErrRate: avgUnCorrErrs });
-            kb1SeshErrs.push({ corrErrRate: avgCorrErrs })
-            console.log(kb1SeshErrs);
-            break;
-
-        case (2):
-            kb2SeshErrs.push({ unCorrErrRate: avgUnCorrErrs });
-            kb2SeshErrs.push({ corrErrRate: avgCorrErrs });
-            break;
-
-        default:
-            break;
-    }
-
-    currKbErrs = [];
-
-}
-
 //For adaptive keyboard
 //Gets the initial width of the keys for each row before they have been adapted
 //to make sure that they don't exceed the resize threshold
 function getKeyWidth() {
-    for (i = 0; i < rowBoundList.length; i++){
+    for (i = 0; i < rowBoundList.length; i++) {
         keySizeList.push(rowBoundList[i].width / rowList[i].length);
     }
 }
@@ -538,20 +473,15 @@ function adaptKb() {
     //one key apart from the expected key
     for (i = 0; i < errTouches.length; i++) {
         if (errTouches[i].expectedKeyX - errTouches[i].erroneousKeyX === 1 || errTouches[i].erroneousKeyX - errTouches[i].expectedKeyX === 1) {
-            checkKeyForResize(errTouches[i].erroneousKeyX, errTouches[i].expectedKeyX, 
-                errTouches[i].erroneousKeyY, errTouches[i].expectedKeyY, 
+            checkKeyForResize(errTouches[i].erroneousKeyX, errTouches[i].expectedKeyX,
+                errTouches[i].erroneousKeyY, errTouches[i].expectedKeyY,
                 errTouches[i].x, errTouches[i].y);
         } else if (errTouches[i].expectedKeyY - errTouches[i].erroneousKeyY === 1 || errTouches[i].erroneousKeyY - errTouches[i].expectedKeyY === 1) {
             console.log(errTouches[i].y);
-            checkKeyForResize(errTouches[i].erroneousKeyX, errTouches[i].expectedKeyX, 
-                errTouches[i].erroneousKeyY, errTouches[i].expectedKeyY, 
+            checkKeyForResize(errTouches[i].erroneousKeyX, errTouches[i].expectedKeyX,
+                errTouches[i].erroneousKeyY, errTouches[i].expectedKeyY,
                 errTouches[i].x, errTouches[i].y);
         }
-    }
-
-    //adapt keys based on heat map
-    for (i = 0; i < keyList.length; i++) {
-
     }
 }
 
@@ -588,10 +518,10 @@ function checkKeyForResize(errXIndex, expXIndex, errYIndex, expYIndex, xTouch, y
     }
 
     //if (xTouch - adaptKeyX[expXIndex] > adaptKeyX[expXIndex - 1] + keyWidthMaxRight)
-    resizeKey(errXIndex, expXIndex, errYIndex, expYIndex, xTouch, yTouch);
+    resizeKeyForErrors(errXIndex, expXIndex, errYIndex, expYIndex, xTouch, yTouch);
 }
 
-function resizeKey(errXIndex, expXIndex, errYIndex, expYIndex, newXCoord, newYCoord, resizeThresh) {
+function resizeKeyForErrors(errXIndex, expXIndex, errYIndex, expYIndex, newXCoord, newYCoord) {
     //Check which side the erroneous key is on so that the right coordinates are changed
     if (errXIndex < expXIndex) {
         //reduce value of left coordinate
@@ -608,22 +538,108 @@ function resizeKey(errXIndex, expXIndex, errYIndex, expYIndex, newXCoord, newYCo
         //increase value of lower coordinate
         adaptKeyY[errYIndex] = newYCoord;
     }
-    //remove in final version
-    clearErrors();
 }
 
 //Go through the adaptKeyX/Y arrays and make sure that the keys are sensible sizes
-//Also adapt keys based on the number of times they've been pressed
-function resizeFromHeatMap() {
-    let keyResizeWeights = [];
-    for (i = 0; i < keyList.length; i++) {
-        keyResizeWeights.push([keyList[i].keyXIndex, keyList[i].keyYIndex, 
-            keyList[i].KPTally]);
+function checkKeySizes() {
+    //Loop through the adaptKeyX array to make sure that keys aren't too big or small
+    for (i = 1; i < 2; i++) {
+        for (i = 0; i < adaptKeyX.length; i++) {
+            let keyLeft = adaptKeyX[i];
+            let keyRight = adaptKeyX[i + 1];
+            //Don't be smaller than 75%
+            let minKeySize = keySizeList[1] *= 0.75;
+            //Don't be larger than 125%
+            let maxKeySize = keySizeList[1] *= 1.25;
+            if (keyRight - keyLeft < minKeySize) {
+                keyRight = keyLeft + minKeySize;
+            } else if (keyRight - keyLeft > maxKeySize) {
+                keyLeft = keyRight - maxKeySize;
+            }
+        }
     }
 }
 
+//Make sure that errors from previous recording cycle aren't reused in the next adaptation cycle
 function clearErrors() {
     errTouches = [];
+}
+
+//When user has typed a phrase, check for uncorrected errors
+function getUnCorrErrsForLastPhrase() {
+    let errorCount = 0;
+    //Iterate through the input box and check the values against the phrase - tally errors when found
+    for (i = 0; i < keyboardInput.value.length; i++) {
+        if (keyboardInput.value[i] != phraseBox.textContent[i]) {
+            errorCount++;
+        }
+    }
+
+    //Get error rate percentage and push into lastPhrErrs
+    errPcnt = Math.round((errorCount / phraseBox.textContent.length) * 100);
+    lastPhrErrs.push(errPcnt);
+}
+
+function getCorrErrsForLastPhrase() {
+    errPcnt = Math.round((errKs / phraseBox.textContent.length) * 100);
+    lastPhrErrs.push(errPcnt);
+    totKs = 0;
+    errKs = 0;
+}
+
+function checkLastKey() {
+    if (keyboardInput.value[cursorPos - 2] != phraseBox.textContent[cursorPos - 2]) {
+        errKs++;
+    }
+}
+
+function pushPhraseErrsToKbErrs() {
+    currKbErrs.push(lastPhrErrs);
+    lastPhrErrs = [];
+}
+
+//Call when user has typed a phrase
+function pushErrorRateToKbErrs() {
+    let currKbUnCorrErrs = [];
+    let currKbCorrErrs = [];
+
+    //Iterate through currKbErrs and sort the values into the corresponding arrays
+    for (i = 0; i < currKbErrs.length; i++) {
+        for (j = 0; j < currKbErrs[i].length; j++) {
+            if (j % 2 != 0) {
+                currKbCorrErrs.push(currKbErrs[i][j]);
+            } else if (j % 2 === 0) {
+                currKbUnCorrErrs.push(currKbErrs[i][j]);
+            }
+        }
+    }
+
+    //Get average uncorrected error rate
+    let avgUnCorrErrs = Math.round(currKbUnCorrErrs.reduce((accumulator, currentValue) =>
+        accumulator + currentValue, 0) / currKbUnCorrErrs.length);
+
+    //Get average corrected error rate
+    let avgCorrErrs = Math.round(currKbCorrErrs.reduce((accumulator, currentValue) =>
+        accumulator + currentValue, 0) / currKbCorrErrs.length);
+
+    //Put values of arrays into array for currently used keyboard as objects
+    switch (kbCount) {
+        case (1):
+            kb1unCorrSeshErrs.push(avgUnCorrErrs);
+            kb1CorrSeshErrs.push(avgCorrErrs);
+            break;
+
+        case (2):
+            kb2unCorrSeshErrs.push(avgUnCorrErrs);
+            kb2CorrSeshErrs.push(avgCorrErrs);
+            break;
+
+        default:
+            break;
+    }
+
+    currKbErrs = [];
+
 }
 
 //Put times into the wordTimes array so that the average WPM can be calculated later
@@ -640,7 +656,19 @@ function getWPM() {
     let avgWordTime = WPMList.reduce((accumulator, currentValue) =>
         accumulator + currentValue, 0) / WPMList.length;
     WPM = 60 / avgWordTime;
-    kb1SeshWPM.push(WPM);
+    switch (kbCount) {
+        case (1):
+            kb1SeshWPM.push(WPM);
+            break;
+
+        case (2):
+            kb2SeshWPM.push(WPM);
+            break;
+
+        default:
+            break;
+    }
+
     //console.log(kb1SeshWPM);
     wordTimes = [];
 }
@@ -667,17 +695,28 @@ function newPhrase() {
     //If user is using the adaptive keyboard, call the adaptKb function when the user has typed a phrase
     if (kbNum === 2) {
         adaptKb();
+        checkKeySizes();
         clearErrors();
     }
 }
 
 function newSession() {
     getWPM();
-
+    pushErrorRateToKbErrs();
     seshCount++;
-    if (seshCount > 3) {
-        newKb();
-        seshCount = 1;
+    switch (kbCount) {
+        //Practice keyboard will have 1 session, data collecting keyboards will have 2
+        case (0):
+            if (seshCount >= 1) {
+                newKb();
+                break;
+            }
+        default:
+            if (seshCount > 2) {
+                newKb();
+                seshCount = 1;
+            }
+            break;
     }
 
     updateDisplays();
@@ -686,7 +725,6 @@ function newSession() {
 }
 
 function newKb() {
-    pushErrorRateToKbErrs();
     kbCount++;
     updateDisplays();
     if (kbCount > 2) {
@@ -710,12 +748,77 @@ function newKb() {
 
 //Update the session and keyboard count displays
 function updateDisplays() {
-    phraseCounter.textContent = `Phrases typed: ${phraseCount}/3`;
-    kbSeshCount.textContent = `Keyboard ${kbCount} - Session ${seshCount}/3`;
-    document.querySelector('title').textContent = `Experiment ${kbCount} - 899549 Research Tool`;
+    if (kbCount === 0) {
+        kbSeshCount.textContent = "Practice session";
+        phraseCounter.textContent = `Phrases typed: ${phraseCount}/3`;
+        document.querySelector("title").textContent = `Practice session - 899549 Research Tool`;
+    } else {
+        phraseCounter.textContent = `Phrases typed: ${phraseCount}/3`;
+        kbSeshCount.textContent = `Keyboard ${kbCount.toString()} - Session ${seshCount}/2`;
+        document.querySelector("title").textContent = `Experiment ${kbCount} - 899549 Research Tool`;
+    }
 }
 
 function dispCompScreen() {
-    //Not final
-    alert('Experiment complete');
+    PIS = sessionStorage.getItem("Read PIS");
+    const clause1 = sessionStorage.getItem("clause1");
+    const clause2 = sessionStorage.getItem("clause2");
+    const clause3 = sessionStorage.getItem("clause3");
+    const clause4 = sessionStorage.getItem("clause4");
+    //Store names of all arrays needed for data collection
+    let dataColl = [PIS, clause1, clause2, clause3, clause4,
+        controlKeyboard, testKeyboard,
+        kb1SeshWPM, kb1unCorrSeshErrs, kb1CorrSeshErrs,
+        kb2SeshWPM, kb2unCorrSeshErrs, kb2CorrSeshErrs];
+
+    const newDiv = document.createElement("div");
+    newDiv.id = "compScreen";
+    const newLine = document.createElement("p");
+    document.body.insertBefore(newDiv, keyboardArea);
+    newLine.innerHTML = "Experiment complete. Please copy the information below and paste it into the first question on the questionnaire, found on the next page";
+    newDiv.appendChild(newLine);
+
+    dataColl.forEach(el => {
+        const newLine = document.createElement("p");
+        if (Array.isArray(el)) {
+            for (i = 0; i < el.length; i++) {
+                let nlText = el[i];
+                newLine.innerHTML += nlText + " ";
+            }
+
+        } else {
+            const nlText = document.createTextNode(el);
+            newLine.appendChild(nlText);
+        }
+        newDiv.appendChild(newLine);
+
+    });
+
+    const nextBtn = document.createElement("a");
+    nextBtn.innerHTML = "Next";
+    nextBtn.id = "nextBtn";
+    newDiv.appendChild(nextBtn);
+
+    const compScreen = document.getElementById("compScreen");
+    const nextBtnEl = document.getElementById("nextBtn");
+
+    nextBtnEl.href = "questionnaire.html";
+
+    //Hide keyboard
+    keyboardArea.style.display = "none";
+
+    compScreen.style.margin = "20% 5% 20% 5%";
+    compScreen.style.position = "absolute";
+    compScreen.style.maxWidth = "90%";
+    compScreen.style.backgroundColor = "white";
+    compScreen.style.borderRadius = "0.5rem";
+    compScreen.style.boxShadow = "0px 1px 3px black";
+    compScreen.style.top = "0";
+
+    nextBtnEl.style.padding = "0.5rem";
+    nextBtnEl.style.textDecoration = "none";
+    nextBtnEl.style.color = "black";
+    nextBtnEl.style.backgroundColor = "white";
+    nextBtnEl.style.borderRadius = "0.5rem";
+    nextBtnEl.style.boxShadow = "0px 1px 3px black";
 }
