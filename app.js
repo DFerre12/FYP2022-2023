@@ -719,7 +719,10 @@ function newSession() {
             break;
     }
 
-    updateDisplays();
+    if (kbCount <= 2) {
+        updateDisplays();
+    }
+
 
     wordTimes = [];
 }
@@ -743,7 +746,7 @@ function dispTitleScreen() {
 
     const titleScreen = document.getElementById("titleScreen");
     const nextBtnEl = document.getElementById("nextBtn");
-    
+
     nextBtn.addEventListener("click", closeTitleScreen);
 
     //Styling
@@ -756,12 +759,15 @@ function dispTitleScreen() {
     titleScreen.style.boxShadow = "0px 1px 3px black";
     titleScreen.style.top = "0";
 
+    nextBtnEl.style.margin = "0.5rem";
     nextBtnEl.style.position = "absolute";
     nextBtnEl.style.bottom = "0";
     nextBtnEl.style.padding = "0.5rem";
     nextBtnEl.style.textDecoration = "none";
+    nextBtnEl.style.fontSize = "inherit";
     nextBtnEl.style.color = "black";
     nextBtnEl.style.backgroundColor = "white";
+    nextBtnEl.style.border = "none";
     nextBtnEl.style.borderRadius = "0.5rem";
     nextBtnEl.style.boxShadow = "0px 1px 3px black";
 }
@@ -773,26 +779,28 @@ function closeTitleScreen() {
 
 function newKb() {
     kbCount++;
-    updateDisplays();
     if (kbCount <= 2) {
         dispTitleScreen();
+        switch (kbNum) {
+            case (0):
+                experimentSession();
+                break;
+            case (1):
+                TestKb();
+                break;
+            case (2):
+                ControlKb();
+                keyboardArea.removeEventListener("touchend", checkForError);
+                keyboardArea.removeEventListener("touchend", tallyKeyPress);
+                break;
+            default: break;
+        }
+        updateDisplays();
     } else {
         dispCompScreen();
+        kbCount--;
     }
-    switch (kbNum) {
-        case (0):
-            experimentSession();
-            break;
-        case (1):
-            TestKb();
-            break;
-        case (2):
-            ControlKb();
-            keyboardArea.removeEventListener("touchend", checkForError);
-            keyboardArea.removeEventListener("touchend", tallyKeyPress);
-            break;
-        default: break;
-    }
+
 }
 
 //Update the session and keyboard count displays
@@ -847,6 +855,9 @@ function dispCompScreen() {
     nextBtn.innerHTML = "Next";
     nextBtn.id = "nextBtn";
     newDiv.appendChild(nextBtn);
+    const pad = document.createElement("p");;
+    pad.innerHTML = "";
+    newDiv.appendChild(pad);
 
     const compScreen = document.getElementById("compScreen");
     const nextBtnEl = document.getElementById("nextBtn");
@@ -857,7 +868,7 @@ function dispCompScreen() {
     keyboardArea.style.display = "none";
 
     //Styling
-    compScreen.style.margin = "20% 5% 20% 5%";
+    compScreen.style.margin = "15% 5% 15% 5%";
     compScreen.style.position = "absolute";
     compScreen.style.width = "90%";
     compScreen.style.backgroundColor = "white";
@@ -865,6 +876,7 @@ function dispCompScreen() {
     compScreen.style.boxShadow = "0px 1px 3px black";
     compScreen.style.top = "0";
 
+    nextBtnEl.style.margin = "0.5rem";
     nextBtnEl.style.padding = "0.5rem";
     nextBtnEl.style.textDecoration = "none";
     nextBtnEl.style.color = "black";
