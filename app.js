@@ -724,10 +724,59 @@ function newSession() {
     wordTimes = [];
 }
 
+function dispTitleScreen() {
+    const newDiv = document.createElement("div");
+    newDiv.id = "titleScreen";
+    const newLine = document.createElement("h1");
+    document.body.insertBefore(newDiv, keyboardArea);
+    newLine.innerHTML = "Keyboard " + kbCount;
+    newDiv.appendChild(newLine);
+
+    const newPara = document.createElement("p");
+    newPara.innerHTML = "Press next to continue to keyboard " + kbCount;
+    newDiv.appendChild(newPara);
+
+    const nextBtn = document.createElement("button");
+    nextBtn.innerHTML = "Next";
+    nextBtn.id = "nextBtn";
+    newDiv.appendChild(nextBtn);
+
+    const titleScreen = document.getElementById("titleScreen");
+    const nextBtnEl = document.getElementById("nextBtn");
+    
+    nextBtn.addEventListener("click", closeTitleScreen);
+
+    //Styling
+    titleScreen.style.margin = "20% 5% 20% 5%";
+    titleScreen.style.position = "absolute";
+    titleScreen.style.width = "90%";
+    titleScreen.style.height = "45%";
+    titleScreen.style.backgroundColor = "white";
+    titleScreen.style.borderRadius = "0.5rem";
+    titleScreen.style.boxShadow = "0px 1px 3px black";
+    titleScreen.style.top = "0";
+
+    nextBtnEl.style.position = "absolute";
+    nextBtnEl.style.bottom = "0";
+    nextBtnEl.style.padding = "0.5rem";
+    nextBtnEl.style.textDecoration = "none";
+    nextBtnEl.style.color = "black";
+    nextBtnEl.style.backgroundColor = "white";
+    nextBtnEl.style.borderRadius = "0.5rem";
+    nextBtnEl.style.boxShadow = "0px 1px 3px black";
+}
+
+function closeTitleScreen() {
+    const titleScreen = document.getElementById("titleScreen");
+    titleScreen.remove();
+}
+
 function newKb() {
     kbCount++;
     updateDisplays();
-    if (kbCount > 2) {
+    if (kbCount <= 2) {
+        dispTitleScreen();
+    } else {
         dispCompScreen();
     }
     switch (kbNum) {
@@ -775,7 +824,7 @@ function dispCompScreen() {
     newDiv.id = "compScreen";
     const newLine = document.createElement("p");
     document.body.insertBefore(newDiv, keyboardArea);
-    newLine.innerHTML = "Experiment complete. Please copy the information below and paste it into the first question on the questionnaire, found on the next page";
+    newLine.innerHTML = "Experiment complete. <span style='color: red'>IMPORTANT:</span> Please copy the information below and paste it into the first question on the questionnaire, found on the next page";
     newDiv.appendChild(newLine);
 
     dataColl.forEach(el => {
@@ -807,9 +856,10 @@ function dispCompScreen() {
     //Hide keyboard
     keyboardArea.style.display = "none";
 
+    //Styling
     compScreen.style.margin = "20% 5% 20% 5%";
     compScreen.style.position = "absolute";
-    compScreen.style.maxWidth = "90%";
+    compScreen.style.width = "90%";
     compScreen.style.backgroundColor = "white";
     compScreen.style.borderRadius = "0.5rem";
     compScreen.style.boxShadow = "0px 1px 3px black";
